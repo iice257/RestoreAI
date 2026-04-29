@@ -274,7 +274,7 @@ function RestoreAIRoot() {
 function PixelScreen({ source, children }: { source: number; children: React.ReactNode }) {
   return (
     <View style={{ flex: 1, backgroundColor: "#050606" }}>
-      <Image source={source} contentFit="cover" style={{ position: "absolute", inset: 0 }} />
+      <Image source={source} contentFit="fill" style={{ position: "absolute", inset: 0 }} />
       {children}
     </View>
   );
@@ -362,11 +362,13 @@ function PixelComparisonScreen({ exportCurrent, selectTool, navigate }: { export
 
 function SplashScreen() {
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 32 }}>
-      <Image source={sampleImages.family} contentFit="cover" style={{ position: "absolute", inset: 0, opacity: 0.18 }} />
-      <Animated.View entering={FadeIn.duration(700)} style={{ alignItems: "center", gap: 16 }}>
-        <Text selectable style={{ color: colors.amber, fontSize: 46 }}>RestoreAI</Text>
-        <Text selectable style={{ color: colors.muted, fontSize: 16, textAlign: "center" }}>Careful restoration for images worth keeping.</Text>
+    <View style={{ flex: 1, justifyContent: "flex-end", alignItems: "center", padding: 34, paddingBottom: 105, backgroundColor: colors.black }}>
+      <Image source={sampleImages.family} contentFit="cover" style={{ position: "absolute", inset: 0, opacity: 0.68 }} />
+      <View style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0,0,0,0.34)" }} />
+      <View style={{ position: "absolute", top: 0, bottom: 0, width: 2, backgroundColor: colors.amber, opacity: 0.75 }} />
+      <Animated.View entering={FadeIn.duration(700)} style={{ alignItems: "center", gap: 10 }}>
+        <Text selectable style={logoMark}>◇</Text>
+        <Text selectable style={brandTitle}>Restore<Text style={{ color: colors.amber }}>AI</Text></Text>
       </Animated.View>
     </View>
   );
@@ -374,24 +376,42 @@ function SplashScreen() {
 
 function OnboardingScreen({ prefs, setPrefs, goLogin, goHome }: { prefs: AppPreferences; setPrefs: (prefs: AppPreferences) => void; goLogin: () => void; goHome: () => void }) {
   return (
-    <ScreenScroll>
-      <Header title="RestoreAI" rightLabel="Skip" onRight={goHome} />
-      <HeroImage asset="archive" label="Recovered tone" />
-      <Text selectable style={titleStyle}>Bring the frame back.</Text>
-      <Text selectable style={bodyStyle}>Repair damage, lift detail, extend composition, and add restrained color without losing the original.</Text>
-      <View style={{ flexDirection: "row", gap: 10 }}>
-        {["Repair", "Enlarge", "Recolor"].map((item) => (
-          <Chip key={item} label={item} active />
-        ))}
+    <ScreenScroll flush>
+      <View style={mockStatusRow}>
+        <Text style={mockStatusText}>9:41</Text>
+        <Text style={mockStatusText}>▮▮▮  Wi-Fi  ▰</Text>
+      </View>
+      <Pressable onPress={goHome} style={{ alignSelf: "flex-end", paddingHorizontal: 14, paddingVertical: 4 }}>
+        <Text selectable style={{ color: colors.text, fontSize: 14 }}>Skip</Text>
+      </Pressable>
+      <Text selectable style={[titleStyle, { textAlign: "center", fontSize: 34, lineHeight: 42, marginTop: 10 }]}>
+        Bring your{"\n"}<Text style={{ color: colors.amber }}>memories</Text> back
+      </Text>
+      <View style={{ height: 330, marginTop: 12, justifyContent: "center", alignItems: "center" }}>
+        <Image source={sampleImages.archive} contentFit="cover" style={[photoStack, { transform: [{ rotate: "-8deg" }, { translateX: -36 }] }]} />
+        <Image source={sampleImages.family} contentFit="cover" style={[photoStack, { transform: [{ rotate: "8deg" }, { translateX: 34 }, { translateY: 10 }] }]} />
+        <Image source={sampleImages.portrait} contentFit="cover" style={[photoStack, { width: 230, height: 250 }]} />
+      </View>
+      <View style={{ flexDirection: "row", justifyContent: "space-around", marginTop: 8 }}>
+        <OnboardingTool icon="✧" title="Restore" body="Repair damage and detail" />
+        <OnboardingTool icon="⌗" title="Enlarge" body="Upscale without losing quality" />
+        <OnboardingTool icon="◌" title="Recolor" body="Add natural colors" />
+      </View>
+      <View style={{ flexDirection: "row", justifyContent: "center", gap: 8, marginTop: 22 }}>
+        <View style={dotActive} />
+        <View style={dot} />
+        <View style={dot} />
       </View>
       <PrimaryButton
-        label="Begin"
+        label="Get Started"
         onPress={() => {
           setPrefs({ ...prefs, onboardingComplete: true });
           goLogin();
         }}
       />
-      <SecondaryButton label="Continue as demo" onPress={goHome} />
+      <Pressable onPress={goHome} style={{ alignItems: "center", padding: 8 }}>
+        <Text selectable style={{ color: colors.teal, fontSize: 16 }}>Continue as Demo</Text>
+      </Pressable>
     </ScreenScroll>
   );
 }
@@ -406,11 +426,22 @@ function LoginScreen({ busy, setBusy, setAccount, goHome }: { busy: boolean; set
     goHome();
   }
   return (
-    <ScreenScroll>
-      <Header title="RestoreAI" />
-      <HeroImage asset="family" label="Private archive" />
-      <Panel>
-        <Text selectable style={sectionTitle}>Sign in</Text>
+    <ScreenScroll flush>
+      <View style={mockStatusRow}>
+        <Text style={mockStatusText}>9:41</Text>
+        <Text style={mockStatusText}>▮▮▮  Wi-Fi  ▰</Text>
+      </View>
+      <Text selectable style={[logoMark, { alignSelf: "center", marginTop: 22 }]}>◇</Text>
+      <Text selectable style={[titleStyle, { textAlign: "center", marginTop: 8 }]}>Welcome back</Text>
+      <View style={{ height: 230, marginTop: 20, alignItems: "center" }}>
+        <Image source={sampleImages.family} contentFit="cover" style={[photoStack, { width: 250, height: 185, transform: [{ rotate: "-8deg" }, { translateX: -20 }] }]} />
+        <Image source={sampleImages.archive} contentFit="cover" style={[photoStack, { width: 250, height: 185, transform: [{ rotate: "7deg" }, { translateX: 18 }, { translateY: 18 }] }]} />
+      </View>
+      <Panel raised>
+        <View style={{ flexDirection: "row", borderBottomWidth: 1, borderBottomColor: colors.stroke }}>
+          <Text selectable style={[sectionTitle, { flex: 1, textAlign: "center", color: colors.amber, paddingBottom: 12 }]}>Log In</Text>
+          <Text selectable style={[sectionTitle, { flex: 1, textAlign: "center", color: colors.muted, paddingBottom: 12 }]}>Sign Up</Text>
+        </View>
         <TextInput
           value={email}
           onChangeText={setEmail}
@@ -421,9 +452,27 @@ function LoginScreen({ busy, setBusy, setAccount, goHome }: { busy: boolean; set
           style={inputStyle}
         />
         <PrimaryButton label={busy ? "Opening archive..." : "Continue"} onPress={submit} disabled={busy} />
-        <SecondaryButton label="Use local demo" onPress={goHome} />
+        <Text selectable style={{ color: colors.muted, textAlign: "center" }}>or continue with</Text>
+        <View style={{ flexDirection: "row", gap: 12 }}>
+          <SecondaryButton compact label="Apple" onPress={submit} />
+          <SecondaryButton compact label="Google" onPress={submit} />
+          <SecondaryButton compact label="Email" onPress={submit} />
+        </View>
+        <Pressable onPress={goHome} style={{ alignItems: "center", paddingTop: 8 }}>
+          <Text selectable style={{ color: colors.teal, fontSize: 16 }}>Continue as Demo</Text>
+        </Pressable>
       </Panel>
     </ScreenScroll>
+  );
+}
+
+function OnboardingTool({ icon, title, body }: { icon: string; title: string; body: string }) {
+  return (
+    <View style={{ width: "30%", alignItems: "center", gap: 8 }}>
+      <Text selectable style={{ color: colors.amber, fontSize: 34 }}>{icon}</Text>
+      <Text selectable style={[sectionTitle, { fontFamily: "Georgia", fontSize: 17, textAlign: "center" }]}>{title}</Text>
+      <Text selectable style={{ color: colors.muted, textAlign: "center", fontSize: 13, lineHeight: 18 }}>{body}</Text>
+    </View>
   );
 }
 
@@ -692,17 +741,44 @@ function AccountScreen({ account, setAccount, navigate }: { account: Account; se
     setBusy(false);
   }
   return (
-    <ScreenScroll>
-      <Header title="Account" leftLabel="<" onLeft={() => navigate("settings")} />
-      <Panel>
-        <Text selectable style={titleStyle}>{account.plan}</Text>
-        <Text selectable style={bodyStyle}>{account.name} - {account.email}</Text>
-        <UsageStrip account={account} />
-        <PrimaryButton label={busy ? "Updating..." : "Upgrade to Archive Pro"} onPress={() => run("upgrade")} disabled={busy} />
-        <SecondaryButton label="Restore purchases" onPress={() => run("restore")} />
-        <SecondaryButton label="Cancel plan" onPress={() => run("cancel")} />
-        <SecondaryButton label="Sign out" onPress={() => run("logout")} />
+    <ScreenScroll flush>
+      <View style={mockStatusRow}>
+        <Text style={mockStatusText}>9:41</Text>
+        <Text style={mockStatusText}>▮▮▮  Wi-Fi  ▰</Text>
+      </View>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 18 }}>
+        <IconButton label="<" onPress={() => navigate("settings")} />
+        <Text selectable style={[sectionTitle, { fontFamily: "Georgia", fontSize: 22 }]}>Subscription</Text>
+        <Pressable onPress={() => run("restore")} style={{ padding: 10 }}>
+          <Text selectable style={{ color: colors.amber }}>Restore</Text>
+        </Pressable>
+      </View>
+      <View style={subscriptionHero}>
+        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+          <Text selectable style={{ color: colors.amber, fontWeight: "700" }}>PREMIUM</Text>
+          <Text selectable style={{ color: colors.amber, fontSize: 34 }}>♛</Text>
+        </View>
+        <Text selectable style={[titleStyle, { fontSize: 42 }]}>Pro</Text>
+        {["Full access to all tools", "Higher resolution exports", "Priority AI processing", "No watermark"].map((item) => (
+          <View key={item} style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
+            <Text style={{ color: colors.amber }}>✓</Text>
+            <Text selectable style={{ color: colors.text, fontSize: 15 }}>{item}</Text>
+          </View>
+        ))}
+        <Text selectable style={[sectionTitle, { fontFamily: "Georgia", fontSize: 28, marginTop: 10 }]}>$3.99 <Text style={{ color: colors.muted, fontSize: 14 }}>/ month</Text></Text>
+        <PrimaryButton label={busy ? "Updating..." : "Upgrade to Pro"} onPress={() => run("upgrade")} disabled={busy} />
+      </View>
+      <Panel raised>
+        <Metadata label="Your Plan" value={account.plan} />
+        <Text selectable style={[sectionTitle, { fontFamily: "Georgia", fontSize: 30 }]}>{account.creditsUsed} / <Text style={{ color: colors.muted, fontSize: 16 }}>{account.creditsTotal} used</Text></Text>
+        <ProgressBar value={(account.creditsUsed / account.creditsTotal) * 100} />
+        <Metadata label="Resets" value={`${account.renewsInDays} days`} />
+        <Metadata label="Compare Plans" value=">" />
       </Panel>
+      <View style={{ flexDirection: "row", gap: 10 }}>
+        <SecondaryButton compact label="Cancel" onPress={() => run("cancel")} />
+        <SecondaryButton compact label="Sign out" onPress={() => run("logout")} />
+      </View>
     </ScreenScroll>
   );
 }
@@ -798,9 +874,13 @@ function BottomTabs({ active, navigate, bottom }: { active: string; navigate: (s
   );
 }
 
-function ScreenScroll({ children, withBottom = false }: { children: React.ReactNode; withBottom?: boolean }) {
+function ScreenScroll({ children, withBottom = false, flush = false }: { children: React.ReactNode; withBottom?: boolean; flush?: boolean }) {
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 22, paddingBottom: withBottom ? 128 : 34, gap: 22 }}>
+    <ScrollView
+      contentInsetAdjustmentBehavior="automatic"
+      style={{ backgroundColor: colors.bg }}
+      contentContainerStyle={{ padding: flush ? 22 : 22, paddingTop: flush ? 16 : 22, paddingBottom: withBottom ? 128 : 34, gap: flush ? 18 : 22 }}
+    >
       {children}
     </ScrollView>
   );
@@ -880,8 +960,8 @@ function SecondaryButton({ label, onPress, compact }: { label: string; onPress: 
   );
 }
 
-function Panel({ children, row = false }: { children: React.ReactNode; row?: boolean }) {
-  return <View style={[styles.panel, row && { flexDirection: "row", alignItems: "center" }]}>{children}</View>;
+function Panel({ children, row = false, raised = false }: { children: React.ReactNode; row?: boolean; raised?: boolean }) {
+  return <View style={[styles.panel, raised && styles.panelRaised, row && { flexDirection: "row", alignItems: "center" }]}>{children}</View>;
 }
 
 function Chip({ label, active = false }: { label: string; active?: boolean }) {
@@ -977,6 +1057,35 @@ function getWorkflowOptions(tool: ToolType) {
 const titleStyle = { color: colors.text, fontSize: 34, lineHeight: 40 } as const;
 const sectionTitle = { color: colors.text, fontSize: 20 } as const;
 const bodyStyle = { color: colors.muted, fontSize: 16, lineHeight: 23 } as const;
+const brandTitle = { color: colors.text, fontFamily: "Georgia", fontSize: 48, lineHeight: 56 } as const;
+const logoMark = { color: colors.amber, fontSize: 52, lineHeight: 58 } as const;
+const mockStatusRow = {
+  minHeight: 34,
+  flexDirection: "row" as const,
+  alignItems: "center" as const,
+  justifyContent: "space-between" as const,
+  paddingHorizontal: 18,
+};
+const mockStatusText = { color: colors.text, fontSize: 16, fontWeight: "700" as const };
+const photoStack = {
+  position: "absolute" as const,
+  width: 220,
+  height: 245,
+  borderRadius: 14,
+  borderWidth: 2,
+  borderColor: "rgba(245,238,230,0.68)",
+  backgroundColor: colors.panel,
+};
+const dot = { width: 8, height: 8, borderRadius: 99, backgroundColor: "rgba(245,238,230,0.32)" };
+const dotActive = { ...dot, width: 12, backgroundColor: colors.amber };
+const subscriptionHero = {
+  padding: 22,
+  gap: 12,
+  borderRadius: 16,
+  borderWidth: 1,
+  borderColor: "rgba(95,191,192,0.78)",
+  backgroundColor: "rgba(9,42,39,0.72)",
+};
 const inputStyle = {
   minHeight: 54,
   borderWidth: 1,
@@ -1037,6 +1146,10 @@ const styles = {
     borderWidth: 1,
     borderColor: colors.stroke,
     backgroundColor: "rgba(255,255,255,0.055)",
+  },
+  panelRaised: {
+    backgroundColor: "rgba(255,255,255,0.07)",
+    borderColor: "rgba(255,255,255,0.14)",
   },
   imageWrap: {
     borderRadius: radii.lg,
