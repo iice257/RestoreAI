@@ -24,7 +24,7 @@ import Animated, {
   useSharedValue,
 } from "react-native-reanimated";
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
-import { sampleImages } from "./assets";
+import { referenceImages, sampleImages } from "./assets";
 import { billingClient, createDemoProject, defaultAccount, defaultPrefs, imageWorkflowClient, authClient } from "./mock-clients";
 import { clearState, initializeDatabase, loadState, saveState } from "./storage";
 import { colors, radii } from "./theme";
@@ -240,11 +240,16 @@ function RestoreAIRoot() {
     splash: <SplashScreen />,
     onboarding: <OnboardingScreen prefs={prefs} setPrefs={setPrefs} goLogin={() => navigate("login")} goHome={() => navigate("home")} />,
     login: <LoginScreen busy={busy} setBusy={setBusy} setAccount={setAccount} goHome={() => navigate("home")} />,
-    home: <HomeScreen account={account} project={selectedProject} selectTool={selectTool} navigate={navigate} setActiveStage={setActiveStage} />,
-    import: <ImportScreen busy={busy} pickImage={pickImage} importSample={importSample} navigate={navigate} />,
-    workflow: <WorkflowScreen tool={selectedTool} project={selectedProject} stage={currentStage} startProcessing={startProcessing} setActiveStage={setActiveStage} navigate={navigate} />,
+    home: <PixelHomeScreen selectTool={selectTool} navigate={navigate} />,
+    import: <PixelImportScreen pickImage={pickImage} importSample={importSample} navigate={navigate} />,
+    workflow:
+      selectedTool === "restore" ? (
+        <PixelRestoreScreen startProcessing={startProcessing} navigate={navigate} />
+      ) : (
+        <WorkflowScreen tool={selectedTool} project={selectedProject} stage={currentStage} startProcessing={startProcessing} setActiveStage={setActiveStage} navigate={navigate} />
+      ),
     processing: <ProcessingScreen progress={progress} tool={selectedTool} project={selectedProject} navigate={navigate} />,
-    comparison: <ComparisonScreen project={selectedProject} stage={currentStage} setActiveStage={setActiveStage} exportCurrent={exportCurrent} selectTool={selectTool} navigate={navigate} />,
+    comparison: <PixelComparisonScreen exportCurrent={exportCurrent} selectTool={selectTool} navigate={navigate} />,
     export: <ExportScreen project={selectedProject} stage={currentStage} prefs={prefs} setPrefs={setPrefs} message={message} busy={busy} exportCurrent={exportCurrent} navigate={navigate} />,
     library: <LibraryScreen projects={projects} setProjects={setProjects} setSelectedProjectId={setSelectedProjectId} navigate={navigate} />,
     detail: <DetailScreen project={selectedProject} setActiveStage={setActiveStage} selectTool={selectTool} exportCurrent={exportCurrent} navigate={navigate} />,
@@ -258,11 +263,100 @@ function RestoreAIRoot() {
   }[screen];
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: insets.top }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <StatusBar style="light" />
       {content}
-      {["home", "import", "library", "settings"].includes(screen) ? <BottomTabs active={screen} navigate={navigate} bottom={insets.bottom} /> : null}
+      {["library", "settings"].includes(screen) ? <BottomTabs active={screen} navigate={navigate} bottom={insets.bottom} /> : null}
     </View>
+  );
+}
+
+function PixelScreen({ source, children }: { source: number; children: React.ReactNode }) {
+  return (
+    <View style={{ flex: 1, backgroundColor: "#050606" }}>
+      <Image source={source} contentFit="cover" style={{ position: "absolute", inset: 0 }} />
+      {children}
+    </View>
+  );
+}
+
+function Hit({ x, y, w, h, onPress, label }: { x: number; y: number; w: number; h: number; onPress: () => void; label: string }) {
+  return (
+    <Pressable
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={{
+        position: "absolute",
+        left: `${x}%`,
+        top: `${y}%`,
+        width: `${w}%`,
+        height: `${h}%`,
+      }}
+    />
+  );
+}
+
+function PixelHomeScreen({ selectTool, navigate }: { selectTool: (tool: ToolType) => void; navigate: (screen: Screen) => void }) {
+  return (
+    <PixelScreen source={referenceImages.home}>
+      <Hit label="View result" x={5} y={16} w={90} h={31} onPress={() => navigate("comparison")} />
+      <Hit label="Account" x={73} y={5} w={10} h={6} onPress={() => navigate("account")} />
+      <Hit label="Profile" x={85} y={5} w={10} h={6} onPress={() => navigate("settings")} />
+      <Hit label="Restore" x={5} y={51} w={22} h={16} onPress={() => selectTool("restore")} />
+      <Hit label="Upscale" x={29} y={51} w={21} h={16} onPress={() => selectTool("upscale")} />
+      <Hit label="Extend" x={52} y={51} w={21} h={16} onPress={() => selectTool("extend")} />
+      <Hit label="Recolor" x={76} y={51} w={20} h={16} onPress={() => selectTool("recolor")} />
+      <Hit label="Try smart restore" x={34} y={82} w={39} h={5} onPress={() => selectTool("restore")} />
+      <Hit label="Import tab" x={25} y={90} w={19} h={8} onPress={() => navigate("import")} />
+      <Hit label="Library tab" x={52} y={90} w={18} h={8} onPress={() => navigate("library")} />
+      <Hit label="Settings tab" x={78} y={90} w={18} h={8} onPress={() => navigate("settings")} />
+    </PixelScreen>
+  );
+}
+
+function PixelImportScreen({ pickImage, importSample, navigate }: { pickImage: (source: "camera" | "library" | "files") => void; importSample: (asset?: Project["sourceAsset"]) => void; navigate: (screen: Screen) => void }) {
+  return (
+    <PixelScreen source={referenceImages.import}>
+      <Hit label="Back" x={5} y={5} w={12} h={7} onPress={() => navigate("home")} />
+      <Hit label="Account" x={84} y={5} w={11} h={7} onPress={() => navigate("account")} />
+      <Hit label="Add a photo" x={6} y={20} w={88} h={31} onPress={() => importSample("portrait")} />
+      <Hit label="Camera" x={5} y={54} w={21} h={11} onPress={() => pickImage("camera")} />
+      <Hit label="Photo library" x={28} y={54} w={21} h={11} onPress={() => pickImage("library")} />
+      <Hit label="Files" x={51} y={54} w={21} h={11} onPress={() => pickImage("files")} />
+      <Hit label="Sample images" x={74} y={54} w={21} h={11} onPress={() => importSample("archive")} />
+      <Hit label="Sample portrait" x={5} y={72} w={20} h={13} onPress={() => importSample("portrait")} />
+      <Hit label="Sample archive" x={28} y={72} w={21} h={13} onPress={() => importSample("archive")} />
+      <Hit label="Sample family" x={51} y={72} w={21} h={13} onPress={() => importSample("family")} />
+      <Hit label="Learn more" x={69} y={89} w={25} h={7} onPress={() => navigate("privacy")} />
+    </PixelScreen>
+  );
+}
+
+function PixelRestoreScreen({ startProcessing, navigate }: { startProcessing: (settings: EditStage["settings"]) => void; navigate: (screen: Screen) => void }) {
+  return (
+    <PixelScreen source={referenceImages.restore}>
+      <Hit label="Back" x={5} y={5} w={12} h={7} onPress={() => navigate("home")} />
+      <Hit label="Tips" x={79} y={6} w={16} h={6} onPress={() => Alert.alert("Tips", "Stack edits from any timeline stage. The original file is never overwritten.")} />
+      <Hit label="Scratch repair" x={5} y={64} w={22} h={14} onPress={() => undefined} />
+      <Hit label="Fade recovery" x={29} y={64} w={22} h={14} onPress={() => undefined} />
+      <Hit label="Blur cleanup" x={52} y={64} w={22} h={14} onPress={() => undefined} />
+      <Hit label="Detail recovery" x={76} y={64} w={21} h={14} onPress={() => undefined} />
+      <Hit label="Restore photo" x={5} y={87} w={90} h={7} onPress={() => startProcessing({ scratch: true, fade: true, blur: true, detail: true, intensity: "balanced" })} />
+    </PixelScreen>
+  );
+}
+
+function PixelComparisonScreen({ exportCurrent, selectTool, navigate }: { exportCurrent: () => void; selectTool: (tool: ToolType) => void; navigate: (screen: Screen) => void }) {
+  return (
+    <PixelScreen source={referenceImages.comparison}>
+      <Hit label="Back" x={5} y={5} w={12} h={7} onPress={() => navigate("home")} />
+      <Hit label="Export" x={74} y={5} w={21} h={6} onPress={exportCurrent} />
+      <Hit label="Edit" x={80} y={74} w={15} h={5} onPress={() => selectTool("upscale")} />
+      <Hit label="Save" x={4} y={90} w={22} h={7} onPress={exportCurrent} />
+      <Hit label="Share" x={28} y={90} w={22} h={7} onPress={() => Share.share({ message: "RestoreAI result ready for review." })} />
+      <Hit label="More" x={51} y={90} w={23} h={7} onPress={() => navigate("detail")} />
+      <Hit label="Favorite" x={76} y={90} w={21} h={7} onPress={() => navigate("detail")} />
+    </PixelScreen>
   );
 }
 
