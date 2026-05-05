@@ -1,0 +1,59 @@
+- generic [ref=e9]:
+  - generic [ref=e208]:
+    - generic [ref=e209]:
+      - generic [ref=e210]: RestoreAI
+      - generic [ref=e212] [cursor=pointer]: Crown
+    - generic [ref=e213]:
+      - generic [ref=e214]: Recent project
+      - generic [ref=e216] [cursor=pointer]: See all
+    - generic [ref=e217] [cursor=pointer]:
+      - img [ref=e219]
+      - generic [ref=e222]: Before
+      - generic [ref=e224]: After
+      - generic [ref=e225]:
+        - generic [ref=e226]: Family Portrait - 1946
+        - generic [ref=e227]: Original - 0 edits
+    - generic [ref=e229]: Tools
+    - generic [ref=e230]:
+      - generic [ref=e231] [cursor=pointer]:
+        - generic [ref=e232]: ++
+        - generic [ref=e233]: Restore
+        - generic [ref=e234]: Repair damage and recover tone
+      - generic [ref=e235] [cursor=pointer]:
+        - generic [ref=e236]: NE
+        - generic [ref=e237]: Upscale
+        - generic [ref=e238]: Enlarge without harsh edges
+      - generic [ref=e239] [cursor=pointer]:
+        - generic [ref=e240]: "[]"
+        - generic [ref=e241]: Extend
+        - generic [ref=e242]: Adjust aspect and preserve subject
+      - generic [ref=e243] [cursor=pointer]:
+        - generic [ref=e244]: "**"
+        - generic [ref=e245]: Recolor
+        - generic [ref=e246]: Add natural color to B&W photos
+    - generic [ref=e247]:
+      - generic [ref=e248]:
+        - generic [ref=e249]: Your usage
+        - generic [ref=e250]: This month
+      - generic [ref=e251]: 6 / 20 credits used
+      - generic [ref=e254]: 14 credits left - resets in 18 days
+    - generic [ref=e255]:
+      - img [ref=e257]
+      - generic [ref=e258]:
+        - generic [ref=e259]: Bring this memory back to life
+        - generic [ref=e260]: Try a balanced restore from the current stage.
+        - generic [ref=e262] [cursor=pointer]: Try Smart Restore
+      - generic [ref=e264] [cursor=pointer]: x
+  - generic [ref=e265]:
+    - generic [ref=e266] [cursor=pointer]:
+      - generic [ref=e267]: H
+      - generic [ref=e268]: Home
+    - generic [ref=e269] [cursor=pointer]:
+      - generic [ref=e270]: I
+      - generic [ref=e271]: Import
+    - generic [ref=e272] [cursor=pointer]:
+      - generic [ref=e273]: L
+      - generic [ref=e274]: Library
+    - generic [ref=e275] [cursor=pointer]:
+      - generic [ref=e276]: S
+      - generic [ref=e277]: Settings

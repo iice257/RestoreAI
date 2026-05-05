@@ -1,0 +1,37 @@
+- generic [ref=e279]:
+  - generic [ref=e280]:
+    - generic [ref=e282] [cursor=pointer]: <
+    - generic [ref=e283]: Restore
+    - generic [ref=e285] [cursor=pointer]: Tips
+  - generic [ref=e286]: AI is analyzing your photo...
+  - generic [ref=e287]:
+    - img [ref=e289]
+    - generic [ref=e292]: Original
+  - generic [ref=e295] [cursor=pointer]:
+    - generic [ref=e296]: Source
+    - generic [ref=e297]: Original
+  - generic [ref=e298]: AI Restoration Controls
+  - generic [ref=e299]:
+    - generic [ref=e300] [cursor=pointer]:
+      - generic [ref=e301]: Band
+      - generic [ref=e302]: Scratch Repair
+      - generic [ref=e303]: Remove cracks and scratches
+    - generic [ref=e305] [cursor=pointer]:
+      - generic [ref=e306]: Sun
+      - generic [ref=e307]: Fade Recovery
+      - generic [ref=e308]: Restore colors and contrast
+    - generic [ref=e310] [cursor=pointer]:
+      - generic [ref=e311]: Dot
+      - generic [ref=e312]: Blur Cleanup
+      - generic [ref=e313]: Sharpen faces and edges
+    - generic [ref=e315] [cursor=pointer]:
+      - generic [ref=e316]: Fine
+      - generic [ref=e317]: Detail Recovery
+      - generic [ref=e318]: Enhance fine details
+  - generic [ref=e320]: Repair Intensity
+  - generic [ref=e321]:
+    - generic [ref=e323] [cursor=pointer]: Subtle
+    - generic [ref=e325] [cursor=pointer]: Balanced
+    - generic [ref=e327] [cursor=pointer]: Strong
+  - generic [ref=e329] [cursor=pointer]: Restore Photo
+  - generic [ref=e330]: Original preserved - new output added to timeline

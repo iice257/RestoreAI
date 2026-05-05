@@ -1,0 +1,59 @@
+- generic [ref=e9]:
+  - generic [ref=e36]:
+    - generic [ref=e37]:
+      - generic [ref=e38]: RestoreAI
+      - generic [ref=e40] [cursor=pointer]: Crown
+    - generic [ref=e41]:
+      - generic [ref=e42]: Recent project
+      - generic [ref=e44] [cursor=pointer]: See all
+    - generic [ref=e45] [cursor=pointer]:
+      - img [ref=e47]
+      - generic [ref=e50]: Before
+      - generic [ref=e52]: After
+      - generic [ref=e53]:
+        - generic [ref=e54]: Family Portrait - 1946
+        - generic [ref=e55]: Original - 0 edits
+    - generic [ref=e57]: Tools
+    - generic [ref=e58]:
+      - generic [ref=e59] [cursor=pointer]:
+        - generic [ref=e60]: ++
+        - generic [ref=e61]: Restore
+        - generic [ref=e62]: Repair damage and recover tone
+      - generic [ref=e63] [cursor=pointer]:
+        - generic [ref=e64]: NE
+        - generic [ref=e65]: Upscale
+        - generic [ref=e66]: Enlarge without harsh edges
+      - generic [ref=e67] [cursor=pointer]:
+        - generic [ref=e68]: "[]"
+        - generic [ref=e69]: Extend
+        - generic [ref=e70]: Adjust aspect and preserve subject
+      - generic [ref=e71] [cursor=pointer]:
+        - generic [ref=e72]: "**"
+        - generic [ref=e73]: Recolor
+        - generic [ref=e74]: Add natural color to B&W photos
+    - generic [ref=e75]:
+      - generic [ref=e76]:
+        - generic [ref=e77]: Your usage
+        - generic [ref=e78]: This month
+      - generic [ref=e79]: 6 / 20 credits used
+      - generic [ref=e82]: 14 credits left - resets in 18 days
+    - generic [ref=e83]:
+      - img [ref=e85]
+      - generic [ref=e86]:
+        - generic [ref=e87]: Bring this memory back to life
+        - generic [ref=e88]: Try a balanced restore from the current stage.
+        - generic [ref=e90] [cursor=pointer]: Try Smart Restore
+      - generic [ref=e92] [cursor=pointer]: x
+  - generic [ref=e93]:
+    - generic [ref=e94] [cursor=pointer]:
+      - generic [ref=e95]: H
+      - generic [ref=e96]: Home
+    - generic [ref=e97] [cursor=pointer]:
+      - generic [ref=e98]: I
+      - generic [ref=e99]: Import
+    - generic [ref=e100] [cursor=pointer]:
+      - generic [ref=e101]: L
+      - generic [ref=e102]: Library
+    - generic [ref=e103] [cursor=pointer]:
+      - generic [ref=e104]: S
+      - generic [ref=e105]: Settings
