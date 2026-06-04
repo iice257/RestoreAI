@@ -13,6 +13,7 @@ RestoreAI currently avoids several production risks because it does not talk to 
 - The draft Supabase schema enables RLS on user-data tables.
 - Billing and processing states are intended to be server-authoritative, not client-authoritative.
 - Remote deletion state must be verified by the backend provider before being shown as final.
+- Live service modes fail closed until real clients are wired, so a preview build cannot silently use mocks while claiming live auth, billing, or processing.
 
 ## High-Priority Security Gaps
 
@@ -34,4 +35,3 @@ RestoreAI currently avoids several production risks because it does not talk to 
 - Validate image type, size, and processing options server-side.
 - Verify every billing webhook signature before updating entitlements.
 - Store only public publishable keys in Expo public env.
-
