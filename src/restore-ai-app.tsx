@@ -824,6 +824,8 @@ function StateScreen({ title, body, action, onAction }: { title: string; body: s
 function BeforeAfter({ asset, uri }: { asset: keyof typeof sampleImages; uri?: string }) {
   const { width } = useWindowDimensions();
   const reveal = useSharedValue(width * 0.5);
+  const beforeSource = uri ? { uri } : sampleImages[asset];
+  const afterSource = uri ? { uri } : sampleImages.portrait;
   const gesture = Gesture.Pan().onUpdate((event) => {
     reveal.value = Math.max(44, Math.min(width - 44, event.absoluteX));
   });
@@ -832,9 +834,9 @@ function BeforeAfter({ asset, uri }: { asset: keyof typeof sampleImages; uri?: s
   return (
     <GestureDetector gesture={gesture}>
       <View style={{ height: 520, borderRadius: radii.lg, overflow: "hidden", borderWidth: 1, borderColor: colors.stroke }}>
-        <Image source={uri ? { uri } : sampleImages[asset]} contentFit="cover" style={{ position: "absolute", inset: 0 }} />
+        <Image source={beforeSource} contentFit="cover" style={{ position: "absolute", inset: 0 }} />
         <Animated.View style={[{ position: "absolute", left: 0, top: 0, bottom: 0, overflow: "hidden", opacity: 0.64 }, overlayStyle]}>
-          <Image source={sampleImages.portrait} contentFit="cover" style={{ width, height: 520 }} />
+          <Image source={afterSource} contentFit="cover" style={{ width, height: 520 }} />
         </Animated.View>
         <Animated.View style={[{ position: "absolute", top: 0, bottom: 0, width: 2, backgroundColor: colors.amber }, lineStyle]} />
         <Badge label="Before" style={{ left: 16, top: 16 }} />

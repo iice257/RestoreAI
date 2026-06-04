@@ -82,7 +82,8 @@ export const imageWorkflowClient: ImageWorkflowClient = {
       subtitle: subtitleMap[tool],
       createdAt: new Date().toISOString(),
       sourceStageId: current.id,
-      outputAsset: tool === "recolor" ? "family" : tool === "extend" ? "archive" : "portrait",
+      outputAsset: current.outputUri ? current.outputAsset : tool === "recolor" ? "family" : tool === "extend" ? "archive" : "portrait",
+      outputUri: current.outputUri,
       settings,
       remoteState: prefs.deleteRemoteAfterProcessing ? "deleted" : "downloaded",
     };
