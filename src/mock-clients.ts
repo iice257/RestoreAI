@@ -99,6 +99,7 @@ export const imageWorkflowClient: ImageWorkflowClient = {
       createdAt: new Date().toISOString(),
       sourceStageId: current.id,
       outputAsset: current.outputAsset,
+      outputUri: current.outputUri,
       settings: { format },
       remoteState: "not_uploaded",
     };

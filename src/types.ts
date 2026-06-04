@@ -20,6 +20,7 @@ export type EditStage = {
   createdAt: string;
   sourceStageId?: string;
   outputAsset: SampleImageKey;
+  outputUri?: string;
   settings: Record<string, string | number | boolean>;
   remoteState: RemoteState;
 };
@@ -30,6 +31,7 @@ export type Project = {
   year: string;
   favorite: boolean;
   sourceAsset: SampleImageKey;
+  sourceUri?: string;
   activeStageId: string;
   stages: EditStage[];
   exports: EditStage[];

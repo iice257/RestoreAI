@@ -30,6 +30,7 @@ import {
   appendStage,
   consumeCredit,
   createImportedProject,
+  createLocalPhotoProject,
   formatDisplayDate,
   getActiveStage,
   getRemainingCredits,
@@ -141,6 +142,13 @@ function RestoreAIRoot() {
     navigate("workflow");
   }
 
+  function importPickedImage(sourceUri: string, fallbackAsset: Project["sourceAsset"]) {
+    const next = createLocalPhotoProject(sourceUri, fallbackAsset);
+    setProjects((items) => [next, ...items]);
+    setSelectedProjectId(next.id);
+    navigate("workflow");
+  }
+
   async function pickImage(source: "camera" | "library" | "files") {
     setBusy(true);
     try {
@@ -152,12 +160,14 @@ function RestoreAIRoot() {
         navigate("permission");
         return;
       }
-      if (source === "camera") {
-        await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], quality: 0.9 });
-      } else {
-        await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.9 });
-      }
-      importSample(source === "files" ? "archive" : "portrait");
+      const result =
+        source === "camera"
+          ? await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], quality: 0.9 })
+          : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.9 });
+
+      if (result.canceled || !result.assets[0]?.uri) return;
+
+      importPickedImage(result.assets[0].uri, source === "files" ? "archive" : "portrait");
     } finally {
       setBusy(false);
     }
@@ -351,6 +361,10 @@ function PixelComparisonScreen({ exportCurrent, selectTool, navigate }: { export
   );
 }
 
+function stageImageSource(stage: Pick<EditStage, "outputAsset" | "outputUri">) {
+  return stage.outputUri ? { uri: stage.outputUri } : sampleImages[stage.outputAsset];
+}
+
 function SplashScreen() {
   return (
     <View style={{ flex: 1, justifyContent: "flex-end", alignItems: "center", padding: 34, paddingBottom: 105, backgroundColor: colors.black }}>
@@ -474,7 +488,7 @@ function HomeScreen({ account, project, selectTool, navigate, setActiveStage }: 
       <Header title="RestoreAI" leftLabel="" rightLabel={account.plan === "Archive Pro" ? "Pro" : "Crown"} onRight={() => navigate("account")} />
       <SectionHeader label="Recent project" action="See all" onPress={() => navigate("library")} />
       <Pressable onPress={() => navigate("comparison")} style={styles.heroCard}>
-        <Image source={sampleImages[stage.outputAsset]} contentFit="cover" style={styles.heroImage} />
+        <Image source={stageImageSource(stage)} contentFit="cover" style={styles.heroImage} />
         <View style={styles.beforeAfterLine} />
         <Badge label="Before" style={{ left: 18, top: 18 }} />
         <Badge label="After" style={{ right: 18, top: 18, backgroundColor: "rgba(45,124,126,0.8)" }} />
@@ -548,7 +562,7 @@ function WorkflowScreen({ tool, project, stage, startProcessing, setActiveStage,
     <ScreenScroll>
       <Header title={copy.title} leftLabel="<" onLeft={() => navigate("home")} rightLabel="Tips" onRight={() => Alert.alert("Tips", "Stack edits from any timeline stage. Your original is never overwritten.")} />
       <Text selectable style={{ color: colors.amber, textAlign: "center" }}>{tool === "restore" ? "AI is analyzing your photo..." : "Ready from current timeline stage"}</Text>
-      <HeroImage asset={stage.outputAsset} label={stage.title} tall />
+      <HeroImage asset={stage.outputAsset} uri={stage.outputUri} label={stage.title} tall />
       <Timeline stages={project.stages} activeId={project.activeStageId} onSelect={setActiveStage} />
       <Text selectable style={sectionTitle}>{tool === "restore" ? "AI Restoration Controls" : `${copy.title} Controls`}</Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
@@ -576,10 +590,11 @@ function WorkflowScreen({ tool, project, stage, startProcessing, setActiveStage,
 }
 
 function ProcessingScreen({ progress, tool, project, navigate }: { progress: number; tool: ToolType; project: Project; navigate: (screen: Screen) => void }) {
+  const stage = getActiveStage(project);
   return (
     <ScreenScroll>
       <Header title="Processing" leftLabel="<" onLeft={() => navigate("workflow")} />
-      <HeroImage asset={getActiveStage(project).outputAsset} label={toolCopy[tool].title} tall />
+      <HeroImage asset={stage.outputAsset} uri={stage.outputUri} label={toolCopy[tool].title} tall />
       <Panel>
         <Text selectable style={sectionTitle}>{progress < 100 ? "Building the next stage" : "Ready to compare"}</Text>
         <ProgressBar value={progress} />
@@ -599,7 +614,7 @@ function ComparisonScreen({ project, stage, setActiveStage, exportCurrent, selec
   return (
     <ScreenScroll>
       <Header title="Comparison" leftLabel="<" onLeft={() => navigate("home")} rightLabel="Export" onRight={exportCurrent} />
-      <BeforeAfter asset={stage.outputAsset} />
+      <BeforeAfter asset={stage.outputAsset} uri={stage.outputUri} />
       <Timeline stages={project.stages} activeId={project.activeStageId} onSelect={setActiveStage} />
       <Panel>
         <Metadata label="Restored on" value={formatDisplayDate(stage.createdAt)} />
@@ -621,7 +636,7 @@ function ExportScreen({ project, stage, prefs, setPrefs, message, busy, exportCu
   return (
     <ScreenScroll>
       <Header title="Export" leftLabel="<" onLeft={() => navigate("comparison")} />
-      <HeroImage asset={stage.outputAsset} label="Final variant" />
+      <HeroImage asset={stage.outputAsset} uri={stage.outputUri} label="Final variant" />
       <Panel>
         <Text selectable style={sectionTitle}>Export variant</Text>
         <Text selectable style={bodyStyle}>{message || "Create a separate file without touching the source or timeline."}</Text>
@@ -667,7 +682,7 @@ function LibraryScreen({ projects, setProjects, setSelectedProjectId, navigate }
               onLongPress={() => setProjects(projects.filter((item) => item.id !== project.id))}
               style={styles.libraryCard}
             >
-              <Image source={sampleImages[stage.outputAsset]} contentFit="cover" style={{ width: "100%", height: 170, borderRadius: radii.md }} />
+              <Image source={stageImageSource(stage)} contentFit="cover" style={{ width: "100%", height: 170, borderRadius: radii.md }} />
               <Text selectable style={styles.cardTitle}>{project.title}</Text>
               <Text selectable style={styles.cardBody}>{project.stages.length - 1} edits - {project.exports.length} exports</Text>
             </Pressable>
@@ -683,7 +698,7 @@ function DetailScreen({ project, setActiveStage, selectTool, exportCurrent, navi
   return (
     <ScreenScroll>
       <Header title={project.title} leftLabel="<" onLeft={() => navigate("library")} rightLabel="Export" onRight={exportCurrent} />
-      <HeroImage asset={stage.outputAsset} label={stage.title} tall />
+      <HeroImage asset={stage.outputAsset} uri={stage.outputUri} label={stage.title} tall />
       <Timeline stages={project.stages} activeId={project.activeStageId} onSelect={setActiveStage} />
       <Panel>
         <Metadata label="Original" value="Preserved" />
@@ -806,7 +821,7 @@ function StateScreen({ title, body, action, onAction }: { title: string; body: s
   );
 }
 
-function BeforeAfter({ asset }: { asset: keyof typeof sampleImages }) {
+function BeforeAfter({ asset, uri }: { asset: keyof typeof sampleImages; uri?: string }) {
   const { width } = useWindowDimensions();
   const reveal = useSharedValue(width * 0.5);
   const gesture = Gesture.Pan().onUpdate((event) => {
@@ -817,7 +832,7 @@ function BeforeAfter({ asset }: { asset: keyof typeof sampleImages }) {
   return (
     <GestureDetector gesture={gesture}>
       <View style={{ height: 520, borderRadius: radii.lg, overflow: "hidden", borderWidth: 1, borderColor: colors.stroke }}>
-        <Image source={sampleImages[asset]} contentFit="cover" style={{ position: "absolute", inset: 0 }} />
+        <Image source={uri ? { uri } : sampleImages[asset]} contentFit="cover" style={{ position: "absolute", inset: 0 }} />
         <Animated.View style={[{ position: "absolute", left: 0, top: 0, bottom: 0, overflow: "hidden", opacity: 0.64 }, overlayStyle]}>
           <Image source={sampleImages.portrait} contentFit="cover" style={{ width, height: 520 }} />
         </Animated.View>
@@ -895,10 +910,10 @@ function IconButton({ label, onPress }: { label: string; onPress?: () => void })
   );
 }
 
-function HeroImage({ asset, label, tall = false }: { asset: keyof typeof sampleImages; label: string; tall?: boolean }) {
+function HeroImage({ asset, uri, label, tall = false }: { asset: keyof typeof sampleImages; uri?: string; label: string; tall?: boolean }) {
   return (
     <Animated.View entering={FadeIn.duration(350)} layout={LinearTransition} style={[styles.imageWrap, { height: tall ? 510 : 310 }]}>
-      <Image source={sampleImages[asset]} contentFit="cover" style={{ position: "absolute", inset: 0 }} />
+      <Image source={uri ? { uri } : sampleImages[asset]} contentFit="cover" style={{ position: "absolute", inset: 0 }} />
       <View style={{ position: "absolute", left: 16, bottom: 16 }}>
         <Chip label={label} active />
       </View>

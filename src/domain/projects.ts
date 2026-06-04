@@ -5,6 +5,7 @@ type ProjectSeed = {
   title: string;
   year: string;
   sourceAsset: SampleImageKey;
+  sourceUri?: string;
   createdAt?: string;
 };
 
@@ -23,6 +24,7 @@ export function createProject(seed: ProjectSeed): Project {
     year: seed.year,
     favorite: false,
     sourceAsset: seed.sourceAsset,
+    sourceUri: seed.sourceUri,
     activeStageId: "source",
     stages: [
       {
@@ -32,6 +34,7 @@ export function createProject(seed: ProjectSeed): Project {
         subtitle: "Preserved source image",
         createdAt: seed.createdAt ?? new Date().toISOString(),
         outputAsset: seed.sourceAsset,
+        outputUri: seed.sourceUri,
         settings: {},
         remoteState: "not_uploaded",
       },
@@ -46,6 +49,17 @@ export function createImportedProject(asset: SampleImageKey, now = Date.now()) {
     title: asset === "family" ? "Family Portrait" : asset === "archive" ? "Main Street" : "Studio Portrait",
     year: asset === "archive" ? "1938" : "1946",
     sourceAsset: asset,
+    createdAt: new Date(now).toISOString(),
+  });
+}
+
+export function createLocalPhotoProject(sourceUri: string, fallbackAsset: SampleImageKey = "portrait", now = Date.now()) {
+  return createProject({
+    id: `project-${now}`,
+    title: "Imported Photo",
+    year: new Date(now).getFullYear().toString(),
+    sourceAsset: fallbackAsset,
+    sourceUri,
     createdAt: new Date(now).toISOString(),
   });
 }
@@ -83,4 +97,3 @@ export function consumeCredit(account: Account): Account {
     creditsUsed: Math.min(account.creditsUsed + 1, account.creditsTotal),
   };
 }
-
