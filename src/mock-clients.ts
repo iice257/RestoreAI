@@ -1,4 +1,6 @@
 import type { Account, AppPreferences, EditStage, Project, ToolType } from "./types";
+import { createProject, getActiveStage } from "./domain/projects";
+import type { AuthClient, BillingClient, ImageWorkflowClient } from "./services/contracts";
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -21,7 +23,7 @@ export const defaultPrefs: AppPreferences = {
   offlineMode: false,
 };
 
-export const authClient = {
+export const authClient: AuthClient = {
   async signIn(email: string): Promise<Account> {
     await wait(350);
     return {
@@ -40,7 +42,7 @@ export const authClient = {
   },
 };
 
-export const billingClient = {
+export const billingClient: BillingClient = {
   async upgrade(account: Account): Promise<Account> {
     await wait(400);
     return { ...account, plan: "Archive Pro", creditsTotal: 120, renewsInDays: 30 };
@@ -55,12 +57,12 @@ export const billingClient = {
   },
 };
 
-export const imageWorkflowClient = {
+export const imageWorkflowClient: ImageWorkflowClient = {
   async processStage(project: Project, tool: ToolType, settings: EditStage["settings"], prefs: AppPreferences) {
     if (prefs.offlineMode) throw new Error("Remote processing is unavailable while offline.");
     if (!prefs.privacyConsent) throw new Error("Processing needs upload consent first.");
     await wait(1000);
-    const current = project.stages.find((stage) => stage.id === project.activeStageId) ?? project.stages[0];
+    const current = getActiveStage(project);
     const titleMap: Record<ToolType, string> = {
       restore: "Restored",
       upscale: "Upscaled",
@@ -88,7 +90,7 @@ export const imageWorkflowClient = {
   },
   async exportStage(project: Project, format: string) {
     await wait(450);
-    const current = project.stages.find((stage) => stage.id === project.activeStageId) ?? project.stages[0];
+    const current = getActiveStage(project);
     const stage: EditStage = {
       id: `export-${Date.now()}`,
       type: "export",
@@ -104,24 +106,10 @@ export const imageWorkflowClient = {
   },
 };
 
-export const createDemoProject = (): Project => ({
-  id: "project-family-1946",
-  title: "Family Portrait",
-  year: "1946",
-  favorite: false,
-  sourceAsset: "portrait",
-  activeStageId: "source",
-  stages: [
-    {
-      id: "source",
-      type: "source",
-      title: "Original",
-      subtitle: "Preserved source image",
-      createdAt: new Date().toISOString(),
-      outputAsset: "portrait",
-      settings: {},
-      remoteState: "not_uploaded",
-    },
-  ],
-  exports: [],
-});
+export const createDemoProject = (): Project =>
+  createProject({
+    id: "project-family-1946",
+    title: "Family Portrait",
+    year: "1946",
+    sourceAsset: "portrait",
+  });

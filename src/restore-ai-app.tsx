@@ -25,6 +25,17 @@ import Animated, {
 } from "react-native-reanimated";
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import { referenceImages, sampleImages } from "./assets";
+import {
+  appendExport,
+  appendStage,
+  consumeCredit,
+  createImportedProject,
+  formatDisplayDate,
+  getActiveStage,
+  getRemainingCredits,
+  hasAvailableCredits,
+  replaceProject,
+} from "./domain/projects";
 import { billingClient, createDemoProject, defaultAccount, defaultPrefs, imageWorkflowClient, authClient } from "./services/restoreai-client";
 import { clearState, initializeDatabase, loadState, saveState } from "./storage";
 import { colors, radii } from "./theme";
@@ -57,14 +68,6 @@ const toolCopy: Record<ToolType, { title: string; icon: string; body: string; ac
   recolor: { title: "Recolor", icon: "**", body: "Add natural color to B&W photos", accent: colors.garnet },
 };
 
-function activeStage(project: Project) {
-  return project.stages.find((stage) => stage.id === project.activeStageId) ?? project.stages[0];
-}
-
-function formatDate(value: string) {
-  return new Date(value).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-}
-
 export default function RestoreAIApp() {
   return (
     <SafeAreaProvider>
@@ -86,7 +89,7 @@ function RestoreAIRoot() {
   const [busy, setBusy] = useState(false);
 
   const selectedProject = projects.find((project) => project.id === selectedProjectId) ?? projects[0];
-  const currentStage = activeStage(selectedProject);
+  const currentStage = getActiveStage(selectedProject);
 
   useEffect(() => {
     let mounted = true;
@@ -122,7 +125,7 @@ function RestoreAIRoot() {
   }
 
   function updateProject(nextProject: Project) {
-    setProjects((items) => items.map((item) => (item.id === nextProject.id ? nextProject : item)));
+    setProjects((items) => replaceProject(items, nextProject));
     setSelectedProjectId(nextProject.id);
   }
 
@@ -132,15 +135,7 @@ function RestoreAIRoot() {
   }
 
   function importSample(asset: Project["sourceAsset"] = "portrait") {
-    const project = createDemoProject();
-    const next = {
-      ...project,
-      id: `project-${Date.now()}`,
-      title: asset === "family" ? "Family Portrait" : asset === "archive" ? "Main Street" : "Studio Portrait",
-      year: asset === "archive" ? "1938" : "1946",
-      sourceAsset: asset,
-      stages: project.stages.map((stage) => ({ ...stage, outputAsset: asset })),
-    };
+    const next = createImportedProject(asset);
     setProjects((items) => [next, ...items]);
     setSelectedProjectId(next.id);
     navigate("workflow");
@@ -169,7 +164,7 @@ function RestoreAIRoot() {
   }
 
   async function startProcessing(settings: EditStage["settings"], forceConsent = false) {
-    if (account.creditsUsed >= account.creditsTotal) {
+    if (!hasAvailableCredits(account)) {
       setMessage("Credits are out for this cycle. Upgrade or retry after reset.");
       navigate("error");
       return;
@@ -190,13 +185,9 @@ function RestoreAIRoot() {
       const stage = await imageWorkflowClient.processStage(selectedProject, selectedTool, settings, effectivePrefs);
       clearInterval(timer);
       setProgress(100);
-      const nextProject = {
-        ...selectedProject,
-        activeStageId: stage.id,
-        stages: [...selectedProject.stages, stage],
-      };
+      const nextProject = appendStage(selectedProject, stage);
       updateProject(nextProject);
-      setAccount((value) => ({ ...value, creditsUsed: Math.min(value.creditsUsed + 1, value.creditsTotal) }));
+      setAccount(consumeCredit);
       setTimeout(() => navigate("comparison"), 350);
     } catch (error) {
       clearInterval(timer);
@@ -210,7 +201,7 @@ function RestoreAIRoot() {
     try {
       const permission = await MediaLibrary.requestPermissionsAsync();
       const exported = await imageWorkflowClient.exportStage(selectedProject, prefs.exportFormat);
-      updateProject({ ...selectedProject, exports: [exported, ...selectedProject.exports] });
+      updateProject(appendExport(selectedProject, exported));
       if (!permission.granted) {
         setMessage("Export variant created. Media permission is needed to save to the device.");
       } else {
@@ -477,7 +468,7 @@ function OnboardingTool({ icon, title, body }: { icon: string; title: string; bo
 }
 
 function HomeScreen({ account, project, selectTool, navigate, setActiveStage }: { account: Account; project: Project; selectTool: (tool: ToolType) => void; navigate: (screen: Screen) => void; setActiveStage: (id: string) => void }) {
-  const stage = activeStage(project);
+  const stage = getActiveStage(project);
   return (
     <ScreenScroll withBottom>
       <Header title="RestoreAI" leftLabel="" rightLabel={account.plan === "Archive Pro" ? "Pro" : "Crown"} onRight={() => navigate("account")} />
@@ -588,7 +579,7 @@ function ProcessingScreen({ progress, tool, project, navigate }: { progress: num
   return (
     <ScreenScroll>
       <Header title="Processing" leftLabel="<" onLeft={() => navigate("workflow")} />
-      <HeroImage asset={activeStage(project).outputAsset} label={toolCopy[tool].title} tall />
+      <HeroImage asset={getActiveStage(project).outputAsset} label={toolCopy[tool].title} tall />
       <Panel>
         <Text selectable style={sectionTitle}>{progress < 100 ? "Building the next stage" : "Ready to compare"}</Text>
         <ProgressBar value={progress} />
@@ -611,7 +602,7 @@ function ComparisonScreen({ project, stage, setActiveStage, exportCurrent, selec
       <BeforeAfter asset={stage.outputAsset} />
       <Timeline stages={project.stages} activeId={project.activeStageId} onSelect={setActiveStage} />
       <Panel>
-        <Metadata label="Restored on" value={formatDate(stage.createdAt)} />
+        <Metadata label="Restored on" value={formatDisplayDate(stage.createdAt)} />
         <Metadata label="Model" value="RestoreAI mock v2" />
         <Metadata label="Enhancements" value={stage.subtitle} />
         <Metadata label="Remote copy" value={stage.remoteState === "deleted" ? "Deleted after processing" : stage.remoteState} />
@@ -665,7 +656,7 @@ function LibraryScreen({ projects, setProjects, setSelectedProjectId, navigate }
       </View>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
         {projects.map((project) => {
-          const stage = activeStage(project);
+          const stage = getActiveStage(project);
           return (
             <Pressable
               key={project.id}
@@ -688,7 +679,7 @@ function LibraryScreen({ projects, setProjects, setSelectedProjectId, navigate }
 }
 
 function DetailScreen({ project, setActiveStage, selectTool, exportCurrent, navigate }: { project: Project; setActiveStage: (id: string) => void; selectTool: (tool: ToolType) => void; exportCurrent: () => void; navigate: (screen: Screen) => void }) {
-  const stage = activeStage(project);
+  const stage = getActiveStage(project);
   return (
     <ScreenScroll>
       <Header title={project.title} leftLabel="<" onLeft={() => navigate("library")} rightLabel="Export" onRight={exportCurrent} />
@@ -981,7 +972,7 @@ function Badge({ label, style }: { label: string; style?: object }) {
 }
 
 function UsageStrip({ account }: { account: Account }) {
-  const remaining = account.creditsTotal - account.creditsUsed;
+  const remaining = getRemainingCredits(account);
   return (
     <Panel>
       <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
