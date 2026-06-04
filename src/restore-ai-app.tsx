@@ -25,7 +25,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import { referenceImages, sampleImages } from "./assets";
-import { billingClient, createDemoProject, defaultAccount, defaultPrefs, imageWorkflowClient, authClient } from "./mock-clients";
+import { billingClient, createDemoProject, defaultAccount, defaultPrefs, imageWorkflowClient, authClient } from "./services/restoreai-client";
 import { clearState, initializeDatabase, loadState, saveState } from "./storage";
 import { colors, radii } from "./theme";
 import type { Account, AppPreferences, EditStage, Project, ToolType } from "./types";
