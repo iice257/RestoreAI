@@ -14,6 +14,7 @@ RestoreAI currently avoids several production risks because it does not talk to 
 - Billing and processing states are intended to be server-authoritative, not client-authoritative.
 - Remote deletion state must be verified by the backend provider before being shown as final.
 - Live service modes fail closed until real clients are wired, so a preview build cannot silently use mocks while claiming live auth, billing, or processing.
+- Client-side entitlement gates now keep the local MVP flow honest, but production must still enforce tools, exports, credits, and subscription status on the backend.
 
 ## High-Priority Security Gaps
 

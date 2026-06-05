@@ -49,7 +49,7 @@ export const billingClient: BillingClient = {
   },
   async cancel(account: Account): Promise<Account> {
     await wait(300);
-    return { ...account, plan: "Free", creditsTotal: 20 };
+    return { ...account, plan: "Free", creditsTotal: 20, creditsUsed: Math.min(account.creditsUsed, 20) };
   },
   async restorePurchases(account: Account): Promise<Account> {
     await wait(300);

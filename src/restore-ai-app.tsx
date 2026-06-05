@@ -37,6 +37,13 @@ import {
   hasAvailableCredits,
   replaceProject,
 } from "./domain/projects";
+import {
+  canUseExportFormat,
+  canUseTool,
+  getAllowedExportFormat,
+  getExportEntitlementMessage,
+  getToolEntitlementMessage,
+} from "./domain/entitlements";
 import { billingClient, createDemoProject, defaultAccount, defaultPrefs, imageWorkflowClient, authClient } from "./services/restoreai-client";
 import { clearState, initializeDatabase, loadState, saveState } from "./storage";
 import { colors, radii } from "./theme";
@@ -119,10 +126,15 @@ function RestoreAIRoot() {
     saveState({ account, prefs, projects }).catch(() => undefined);
   }, [account, prefs, projects, screen]);
 
-  function navigate(next: Screen) {
+  function navigate(next: Screen, options: { preserveMessage?: boolean } = {}) {
     Haptics.selectionAsync().catch(() => undefined);
-    setMessage("");
+    if (!options.preserveMessage) setMessage("");
     setScreen(next);
+  }
+
+  function showUpgrade(messageText: string) {
+    setMessage(messageText);
+    navigate("account", { preserveMessage: true });
   }
 
   function updateProject(nextProject: Project) {
@@ -131,6 +143,10 @@ function RestoreAIRoot() {
   }
 
   function selectTool(tool: ToolType) {
+    if (!canUseTool(account, tool)) {
+      showUpgrade(getToolEntitlementMessage(tool));
+      return;
+    }
     setSelectedTool(tool);
     navigate("workflow");
   }
@@ -174,6 +190,10 @@ function RestoreAIRoot() {
   }
 
   async function startProcessing(settings: EditStage["settings"], forceConsent = false) {
+    if (!canUseTool(account, selectedTool)) {
+      showUpgrade(getToolEntitlementMessage(selectedTool));
+      return;
+    }
     if (!hasAvailableCredits(account)) {
       setMessage("Credits are out for this cycle. Upgrade or retry after reset.");
       navigate("error");
@@ -207,6 +227,10 @@ function RestoreAIRoot() {
   }
 
   async function exportCurrent() {
+    if (!canUseExportFormat(account, prefs.exportFormat)) {
+      showUpgrade(getExportEntitlementMessage(prefs.exportFormat));
+      return;
+    }
     setBusy(true);
     try {
       const permission = await MediaLibrary.requestPermissionsAsync();
@@ -237,6 +261,14 @@ function RestoreAIRoot() {
     navigate("onboarding");
   }
 
+  function selectExportFormat(format: AppPreferences["exportFormat"]) {
+    if (!canUseExportFormat(account, format)) {
+      showUpgrade(getExportEntitlementMessage(format));
+      return;
+    }
+    setPrefs({ ...prefs, exportFormat: format });
+  }
+
   const content = {
     splash: <SplashScreen />,
     onboarding: <OnboardingScreen prefs={prefs} setPrefs={setPrefs} goLogin={() => navigate("login")} goHome={() => navigate("home")} />,
@@ -251,11 +283,11 @@ function RestoreAIRoot() {
       ),
     processing: <ProcessingScreen progress={progress} tool={selectedTool} project={selectedProject} navigate={navigate} />,
     comparison: <PixelComparisonScreen exportCurrent={exportCurrent} selectTool={selectTool} navigate={navigate} />,
-    export: <ExportScreen project={selectedProject} stage={currentStage} prefs={prefs} setPrefs={setPrefs} message={message} busy={busy} exportCurrent={exportCurrent} navigate={navigate} />,
+    export: <ExportScreen account={account} project={selectedProject} stage={currentStage} prefs={prefs} selectExportFormat={selectExportFormat} message={message} busy={busy} exportCurrent={exportCurrent} navigate={navigate} />,
     library: <LibraryScreen projects={projects} setProjects={setProjects} setSelectedProjectId={setSelectedProjectId} navigate={navigate} />,
     detail: <DetailScreen project={selectedProject} setActiveStage={setActiveStage} selectTool={selectTool} exportCurrent={exportCurrent} navigate={navigate} />,
     settings: <SettingsScreen account={account} prefs={prefs} setPrefs={setPrefs} navigate={navigate} resetDemo={resetDemo} />,
-    account: <AccountScreen account={account} setAccount={setAccount} navigate={navigate} />,
+    account: <AccountScreen account={account} message={message} setAccount={setAccount} setMessage={setMessage} setPrefs={setPrefs} navigate={navigate} />,
     offline: <StateScreen title="Work is still here" body="Your library stays available. Processing resumes when the connection returns." action="Review library" onAction={() => navigate("library")} />,
     permission: <StateScreen title="Access is blocked" body="Grant photo access or use sample images to keep working." action="Use samples" onAction={() => importSample("portrait")} />,
     empty: <StateScreen title="No projects yet" body="Start with a sample archive photo or import one of your own." action="Import photo" onAction={() => navigate("import")} />,
@@ -632,7 +664,7 @@ function ComparisonScreen({ project, stage, setActiveStage, exportCurrent, selec
   );
 }
 
-function ExportScreen({ project, stage, prefs, setPrefs, message, busy, exportCurrent, navigate }: { project: Project; stage: EditStage; prefs: AppPreferences; setPrefs: (prefs: AppPreferences) => void; message: string; busy: boolean; exportCurrent: () => void; navigate: (screen: Screen) => void }) {
+function ExportScreen({ account, project, stage, prefs, selectExportFormat, message, busy, exportCurrent, navigate }: { account: Account; project: Project; stage: EditStage; prefs: AppPreferences; selectExportFormat: (format: AppPreferences["exportFormat"]) => void; message: string; busy: boolean; exportCurrent: () => void; navigate: (screen: Screen) => void }) {
   return (
     <ScreenScroll>
       <Header title="Export" leftLabel="<" onLeft={() => navigate("comparison")} />
@@ -641,11 +673,14 @@ function ExportScreen({ project, stage, prefs, setPrefs, message, busy, exportCu
         <Text selectable style={sectionTitle}>Export variant</Text>
         <Text selectable style={bodyStyle}>{message || "Create a separate file without touching the source or timeline."}</Text>
         <View style={styles.segmentRow}>
-          {(["JPEG", "PNG", "TIFF"] as AppPreferences["exportFormat"][]).map((format) => (
-            <Pressable key={format} onPress={() => setPrefs({ ...prefs, exportFormat: format })} style={[styles.segment, prefs.exportFormat === format && styles.segmentActive]}>
-              <Text selectable style={{ color: prefs.exportFormat === format ? colors.black : colors.text }}>{format}</Text>
-            </Pressable>
-          ))}
+          {(["JPEG", "PNG", "TIFF"] as AppPreferences["exportFormat"][]).map((format) => {
+            const allowed = canUseExportFormat(account, format);
+            return (
+              <Pressable key={format} onPress={() => selectExportFormat(format)} style={[styles.segment, prefs.exportFormat === format && styles.segmentActive, !allowed && { opacity: 0.55 }]}>
+                <Text selectable style={{ color: prefs.exportFormat === format ? colors.black : colors.text }}>{allowed ? format : `${format} Pro`}</Text>
+              </Pressable>
+            );
+          })}
         </View>
         <PrimaryButton label={busy ? "Saving..." : `Save ${prefs.exportFormat}`} onPress={exportCurrent} disabled={busy} />
       </Panel>
@@ -736,14 +771,28 @@ function SettingsScreen({ account, prefs, setPrefs, navigate, resetDemo }: { acc
   );
 }
 
-function AccountScreen({ account, setAccount, navigate }: { account: Account; setAccount: (account: Account) => void; navigate: (screen: Screen) => void }) {
+function AccountScreen({ account, message, setAccount, setMessage, setPrefs, navigate }: { account: Account; message: string; setAccount: (account: Account) => void; setMessage: (message: string) => void; setPrefs: React.Dispatch<React.SetStateAction<AppPreferences>>; navigate: (screen: Screen) => void }) {
   const [busy, setBusy] = useState(false);
   async function run(action: "upgrade" | "cancel" | "restore" | "logout") {
     setBusy(true);
-    if (action === "upgrade") setAccount(await billingClient.upgrade(account));
-    if (action === "cancel") setAccount(await billingClient.cancel(account));
-    if (action === "restore") setAccount(await billingClient.restorePurchases(account));
-    if (action === "logout") setAccount(await authClient.signOut());
+    if (action === "upgrade") {
+      setAccount(await billingClient.upgrade(account));
+      setMessage("Archive Pro is active for this local MVP session.");
+    }
+    if (action === "cancel") {
+      const nextAccount = await billingClient.cancel(account);
+      setAccount(nextAccount);
+      setPrefs((value) => ({ ...value, exportFormat: getAllowedExportFormat(nextAccount, value.exportFormat) }));
+      setMessage("Archive Pro was canceled. Pro tools and archive exports are locked.");
+    }
+    if (action === "restore") {
+      setAccount(await billingClient.restorePurchases(account));
+      setMessage("Purchases restored for this local MVP session.");
+    }
+    if (action === "logout") {
+      setAccount(await authClient.signOut());
+      setMessage("");
+    }
     setBusy(false);
   }
   return (
@@ -759,6 +808,12 @@ function AccountScreen({ account, setAccount, navigate }: { account: Account; se
           <Text selectable style={{ color: colors.amber }}>Restore</Text>
         </Pressable>
       </View>
+      {message ? (
+        <Panel>
+          <Text selectable style={sectionTitle}>Plan status</Text>
+          <Text selectable style={bodyStyle}>{message}</Text>
+        </Panel>
+      ) : null}
       <View style={subscriptionHero}>
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
           <Text selectable style={{ color: colors.amber, fontWeight: "700" }}>PREMIUM</Text>
