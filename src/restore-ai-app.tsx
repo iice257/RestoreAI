@@ -37,6 +37,7 @@ import {
   hasAvailableCredits,
   replaceProject,
 } from "./domain/projects";
+import { getSignInMessage, isSignedIn } from "./domain/auth";
 import {
   canUseExportFormat,
   canUseTool,
@@ -92,6 +93,7 @@ function RestoreAIRoot() {
   const [projects, setProjects] = useState<Project[]>([createDemoProject()]);
   const [selectedProjectId, setSelectedProjectId] = useState("project-family-1946");
   const [selectedTool, setSelectedTool] = useState<ToolType>("restore");
+  const [postLoginScreen, setPostLoginScreen] = useState<Screen>("home");
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -137,12 +139,29 @@ function RestoreAIRoot() {
     navigate("account", { preserveMessage: true });
   }
 
+  function requireSignIn(messageText: string, nextScreen: Screen = "home") {
+    setPostLoginScreen(nextScreen);
+    setMessage(messageText);
+    navigate("login", { preserveMessage: true });
+  }
+
+  function handleSignedIn(nextAccount: Account) {
+    setAccount(nextAccount);
+    const nextScreen = postLoginScreen;
+    setPostLoginScreen("home");
+    navigate(nextScreen);
+  }
+
   function updateProject(nextProject: Project) {
     setProjects((items) => replaceProject(items, nextProject));
     setSelectedProjectId(nextProject.id);
   }
 
   function selectTool(tool: ToolType) {
+    if (!isSignedIn(account)) {
+      requireSignIn(getSignInMessage("tool"), "home");
+      return;
+    }
     if (!canUseTool(account, tool)) {
       showUpgrade(getToolEntitlementMessage(tool));
       return;
@@ -166,6 +185,10 @@ function RestoreAIRoot() {
   }
 
   async function pickImage(source: "camera" | "library" | "files") {
+    if (!isSignedIn(account)) {
+      requireSignIn(getSignInMessage("import"), "import");
+      return;
+    }
     setBusy(true);
     try {
       const permission =
@@ -190,6 +213,10 @@ function RestoreAIRoot() {
   }
 
   async function startProcessing(settings: EditStage["settings"], forceConsent = false) {
+    if (!isSignedIn(account)) {
+      requireSignIn(getSignInMessage("process"), "workflow");
+      return;
+    }
     if (!canUseTool(account, selectedTool)) {
       showUpgrade(getToolEntitlementMessage(selectedTool));
       return;
@@ -227,6 +254,10 @@ function RestoreAIRoot() {
   }
 
   async function exportCurrent() {
+    if (!isSignedIn(account)) {
+      requireSignIn(getSignInMessage("export"), "comparison");
+      return;
+    }
     if (!canUseExportFormat(account, prefs.exportFormat)) {
       showUpgrade(getExportEntitlementMessage(prefs.exportFormat));
       return;
@@ -271,8 +302,8 @@ function RestoreAIRoot() {
 
   const content = {
     splash: <SplashScreen />,
-    onboarding: <OnboardingScreen prefs={prefs} setPrefs={setPrefs} goLogin={() => navigate("login")} goHome={() => navigate("home")} />,
-    login: <LoginScreen busy={busy} setBusy={setBusy} setAccount={setAccount} goHome={() => navigate("home")} />,
+    onboarding: <OnboardingScreen prefs={prefs} setPrefs={setPrefs} goLogin={() => requireSignIn("", "home")} goHome={() => navigate("home")} />,
+    login: <LoginScreen busy={busy} message={message} setBusy={setBusy} onSignedIn={handleSignedIn} goHome={() => navigate("home")} />,
     home: <PixelHomeScreen selectTool={selectTool} navigate={navigate} />,
     import: <PixelImportScreen pickImage={pickImage} importSample={importSample} navigate={navigate} />,
     workflow:
@@ -453,14 +484,13 @@ function OnboardingScreen({ prefs, setPrefs, goLogin, goHome }: { prefs: AppPref
   );
 }
 
-function LoginScreen({ busy, setBusy, setAccount, goHome }: { busy: boolean; setBusy: (busy: boolean) => void; setAccount: (account: Account) => void; goHome: () => void }) {
+function LoginScreen({ busy, message, setBusy, onSignedIn, goHome }: { busy: boolean; message: string; setBusy: (busy: boolean) => void; onSignedIn: (account: Account) => void; goHome: () => void }) {
   const [email, setEmail] = useState("demo@restoreai.local");
   async function submit() {
     setBusy(true);
     const account = await authClient.signIn(email);
-    setAccount(account);
     setBusy(false);
-    goHome();
+    onSignedIn(account);
   }
   return (
     <ScreenScroll flush>
@@ -475,6 +505,7 @@ function LoginScreen({ busy, setBusy, setAccount, goHome }: { busy: boolean; set
         <Image source={sampleImages.archive} contentFit="cover" style={[photoStack, { width: 250, height: 185, transform: [{ rotate: "7deg" }, { translateX: 18 }, { translateY: 18 }] }]} />
       </View>
       <Panel raised>
+        {message ? <Text selectable style={bodyStyle}>{message}</Text> : null}
         <View style={{ flexDirection: "row", borderBottomWidth: 1, borderBottomColor: colors.stroke }}>
           <Text selectable style={[sectionTitle, { flex: 1, textAlign: "center", color: colors.amber, paddingBottom: 12 }]}>Log In</Text>
           <Text selectable style={[sectionTitle, { flex: 1, textAlign: "center", color: colors.muted, paddingBottom: 12 }]}>Sign Up</Text>

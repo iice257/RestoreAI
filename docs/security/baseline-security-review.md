@@ -15,6 +15,7 @@ RestoreAI currently avoids several production risks because it does not talk to 
 - Remote deletion state must be verified by the backend provider before being shown as final.
 - Live service modes fail closed until real clients are wired, so a preview build cannot silently use mocks while claiming live auth, billing, or processing.
 - Client-side entitlement gates now keep the local MVP flow honest, but production must still enforce tools, exports, credits, and subscription status on the backend.
+- Client-side auth gates now protect real-photo import, processing, and export in the mock app; production must enforce the same boundaries with server-verified sessions and RLS.
 
 ## High-Priority Security Gaps
 
