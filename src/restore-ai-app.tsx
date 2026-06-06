@@ -46,6 +46,7 @@ import {
   getToolEntitlementMessage,
 } from "./domain/entitlements";
 import { billingClient, createDemoProject, defaultAccount, defaultPrefs, imageWorkflowClient, authClient } from "./services/restoreai-client";
+import type { AuthResult } from "./services/contracts";
 import { clearState, initializeDatabase, loadState, saveState } from "./storage";
 import { colors, radii } from "./theme";
 import type { Account, AppPreferences, EditStage, Project, ToolType } from "./types";
@@ -145,11 +146,19 @@ function RestoreAIRoot() {
     navigate("login", { preserveMessage: true });
   }
 
-  function handleSignedIn(nextAccount: Account) {
-    setAccount(nextAccount);
+  function handleAuthResult(result: AuthResult) {
+    setAccount(result.account);
+
+    if (result.requiresVerification) {
+      setMessage(result.notice ?? "Check your email to finish signing in.");
+      navigate("login", { preserveMessage: true });
+      return;
+    }
+
     const nextScreen = postLoginScreen;
     setPostLoginScreen("home");
-    navigate(nextScreen);
+    if (result.notice) setMessage(result.notice);
+    navigate(nextScreen, { preserveMessage: Boolean(result.notice) });
   }
 
   function updateProject(nextProject: Project) {
@@ -303,7 +312,16 @@ function RestoreAIRoot() {
   const content = {
     splash: <SplashScreen />,
     onboarding: <OnboardingScreen prefs={prefs} setPrefs={setPrefs} goLogin={() => requireSignIn("", "home")} goHome={() => navigate("home")} />,
-    login: <LoginScreen busy={busy} message={message} setBusy={setBusy} onSignedIn={handleSignedIn} goHome={() => navigate("home")} />,
+    login: (
+      <LoginScreen
+        busy={busy}
+        message={message}
+        setBusy={setBusy}
+        setMessage={setMessage}
+        onAuthResult={handleAuthResult}
+        goHome={() => navigate("home")}
+      />
+    ),
     home: <PixelHomeScreen selectTool={selectTool} navigate={navigate} />,
     import: <PixelImportScreen pickImage={pickImage} importSample={importSample} navigate={navigate} />,
     workflow:
@@ -484,13 +502,37 @@ function OnboardingScreen({ prefs, setPrefs, goLogin, goHome }: { prefs: AppPref
   );
 }
 
-function LoginScreen({ busy, message, setBusy, onSignedIn, goHome }: { busy: boolean; message: string; setBusy: (busy: boolean) => void; onSignedIn: (account: Account) => void; goHome: () => void }) {
+function LoginScreen({
+  busy,
+  message,
+  setBusy,
+  setMessage,
+  onAuthResult,
+  goHome,
+}: {
+  busy: boolean;
+  message: string;
+  setBusy: (busy: boolean) => void;
+  setMessage: (message: string) => void;
+  onAuthResult: (result: AuthResult) => void;
+  goHome: () => void;
+}) {
   const [email, setEmail] = useState("demo@restoreai.local");
   async function submit() {
+    if (!email.trim()) {
+      setMessage("Enter an email address to continue.");
+      return;
+    }
+
     setBusy(true);
-    const account = await authClient.signIn(email);
-    setBusy(false);
-    onSignedIn(account);
+    try {
+      const result = await authClient.signIn(email);
+      onAuthResult(result);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Sign-in failed. Try again.");
+    } finally {
+      setBusy(false);
+    }
   }
   return (
     <ScreenScroll flush>

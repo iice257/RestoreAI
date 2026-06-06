@@ -1,7 +1,13 @@
 import type { Account, AppPreferences, EditStage, Project, ToolType } from "../types";
 
+export type AuthResult = {
+  account: Account;
+  notice?: string;
+  requiresVerification?: boolean;
+};
+
 export type AuthClient = {
-  signIn(email: string): Promise<Account>;
+  signIn(email: string): Promise<AuthResult>;
   signOut(): Promise<Account>;
 };
 
@@ -20,4 +26,3 @@ export type ImageWorkflowClient = {
   ): Promise<EditStage>;
   exportStage(project: Project, format: AppPreferences["exportFormat"]): Promise<EditStage>;
 };
-

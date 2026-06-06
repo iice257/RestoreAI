@@ -1,5 +1,5 @@
 import { appConfig, getMissingLiveConfig } from "../config/env";
-import type { AuthClient, BillingClient, ImageWorkflowClient } from "./contracts";
+import type { BillingClient, ImageWorkflowClient } from "./contracts";
 import {
   authClient as mockAuthClient,
   billingClient as mockBillingClient,
@@ -8,6 +8,7 @@ import {
   defaultPrefs,
   imageWorkflowClient as mockImageWorkflowClient,
 } from "../mock-clients";
+import { supabaseAuthClient } from "./supabase-auth-client";
 
 export { createDemoProject, defaultAccount, defaultPrefs };
 
@@ -22,15 +23,6 @@ export const serviceReadiness = Object.freeze({
     appConfig.billingMode === "mock" ||
     appConfig.imageWorkflowMode === "mock",
 });
-
-const unavailableAuthClient: AuthClient = {
-  async signIn() {
-    return unavailable("Auth");
-  },
-  async signOut() {
-    return unavailable("Auth");
-  },
-};
 
 const unavailableBillingClient: BillingClient = {
   async upgrade() {
@@ -53,7 +45,7 @@ const unavailableImageWorkflowClient: ImageWorkflowClient = {
   },
 };
 
-export const authClient = appConfig.authMode === "mock" ? mockAuthClient : unavailableAuthClient;
+export const authClient = appConfig.authMode === "mock" ? mockAuthClient : supabaseAuthClient;
 export const billingClient = appConfig.billingMode === "mock" ? mockBillingClient : unavailableBillingClient;
 export const imageWorkflowClient =
   appConfig.imageWorkflowMode === "mock" ? mockImageWorkflowClient : unavailableImageWorkflowClient;

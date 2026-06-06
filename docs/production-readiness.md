@@ -5,6 +5,7 @@ RestoreAI is not production-ready. This checklist tracks the foundations that mu
 ## Mobile App
 
 - Expo Router route groups for auth, protected app screens, modals, and error states.
+- Native Supabase auth callback handling for `restoreai://auth/callback`, session hydration, refresh, and logout.
 - Real device testing on iOS and Android.
 - Camera, media library, file import, save, share, and permission-denied paths.
 - Offline and retry behavior for uploads and processing jobs.
@@ -23,7 +24,7 @@ RestoreAI is not production-ready. This checklist tracks the foundations that mu
 ## Database
 
 - Supabase migrations generated through the CLI once the project is linked.
-- RLS verification with at least two test users.
+- Supabase auth, table grants, and RLS policies verified against at least two real users.
 - Private storage buckets and storage object policies.
 - Backup and recovery plan.
 - Data retention and deletion policy.
@@ -50,4 +51,3 @@ RestoreAI is not production-ready. This checklist tracks the foundations that mu
 - Secrets review.
 - RLS and storage policy tests.
 - Abuse testing for upload and processing endpoints.
-

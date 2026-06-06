@@ -18,7 +18,7 @@ What already works:
 
 What is still demo-only:
 
-- Auth is a local mock and does not create server sessions.
+- Auth defaults to a local mock. Live mode can request Supabase email OTP links, but it does not yet complete the native callback or create an app session.
 - Billing is a local mock and does not use StoreKit, Google Play Billing, RevenueCat, Stripe, or server-side entitlement verification.
 - Image processing is simulated in `src/mock-clients.ts`.
 - Imported camera/library images are discarded and replaced with sample assets.
@@ -30,7 +30,7 @@ What is missing for MVP foundation:
 - Real Expo Router route groups and protected route boundaries.
 - A backend/API layer for image-processing jobs, billing webhooks, entitlement sync, and remote deletion.
 - Supabase project linkage, migrations, RLS verification, storage buckets, and generated types.
-- A production auth flow with secure token handling.
+- A production auth flow with native callback handling, session hydration, secure token handling, and logout revocation.
 - A mobile-compliant billing strategy.
 - CI/CD and EAS project initialization.
 - Error logging, analytics, crash reporting, rate limiting, abuse controls, backups, and operational runbooks.
@@ -57,7 +57,7 @@ Stage 1, foundation scaffold:
 
 Stage 2, end-to-end MVP loop:
 
-- Sign up or sign in with Supabase Auth.
+- Sign up or sign in with Supabase Auth, including the native email OTP callback.
 - Create a project record owned by the authenticated user.
 - Upload the original image to private storage.
 - Create a processing job through a backend endpoint.
@@ -76,4 +76,3 @@ Stage 4, production-readiness passes:
 
 - Add observability, crash reporting, API rate limits, abuse controls, deletion verification, backups, and security test coverage.
 - Run a full security scan and fix findings before any public beta.
-

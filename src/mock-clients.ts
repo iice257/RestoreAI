@@ -24,16 +24,18 @@ export const defaultPrefs: AppPreferences = {
 };
 
 export const authClient: AuthClient = {
-  async signIn(email: string): Promise<Account> {
+  async signIn(email: string) {
     await wait(350);
     return {
-      signedIn: true,
-      name: email.split("@")[0] || "Archivist",
-      email,
-      plan: "Free",
-      creditsUsed: 6,
-      creditsTotal: 20,
-      renewsInDays: 18,
+      account: {
+        signedIn: true,
+        name: email.split("@")[0] || "Archivist",
+        email,
+        plan: "Free",
+        creditsUsed: 6,
+        creditsTotal: 20,
+        renewsInDays: 18,
+      },
     };
   },
   async signOut(): Promise<Account> {
