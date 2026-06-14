@@ -4,7 +4,8 @@ RestoreAI is an Expo mobile app for restoring, upscaling, extending, and recolor
 
 This implementation is a local MVP prototype. It has a polished visual demo, but the production foundations are still being scaffolded:
 
-- Mock auth and subscription flows with persistent account state.
+- Mock auth and subscription flows with persistent account state, plus a partial
+  live Supabase email OTP request path.
 - Mock AI image workflows with realistic progress, privacy consent, credits, retries, and remote deletion state.
 - Non-destructive stacked edits: source images are preserved, and every edit/export becomes a timeline stage.
 - Code-native and reference-image screens built from the supplied premium mobile design references.
@@ -31,4 +32,6 @@ The next milestone is an end-to-end MVP loop:
 
 User signs in, imports or creates a project, runs a restoration job through a backend boundary, persists the project and edit stage in the database, respects entitlement/credit state, and exports the result.
 
-See `docs/audit/2026-06-04-mvp-foundation-review.md` for the current audit and next-stage plan.
+See `docs/audit/2026-06-04-mvp-foundation-review.md` for the current audit and
+next-stage plan. See `docs/app-surface-inventory.md` for the complete page,
+action, feature, foundation, and preview inventory.

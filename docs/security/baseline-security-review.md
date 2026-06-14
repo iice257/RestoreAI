@@ -27,7 +27,9 @@ RestoreAI currently avoids several production risks because it does not talk to 
 - No abuse controls for uploads, processing requests, or repeated failed auth attempts.
 - No audit log for sensitive operations.
 - No data retention policy for originals, generated outputs, or deleted remote jobs.
-- No dependency vulnerability scan has been run in this pass.
+- The 2026-06-14 dependency audit repair removed the critical transitive
+  finding. Eleven moderate Expo toolchain findings remain; the available fix
+  requires a controlled Expo SDK 56 upgrade.
 
 ## Security Rules For The Next Implementation Pass
 
