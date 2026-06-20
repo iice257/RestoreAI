@@ -78,8 +78,11 @@ implementations.
 ### Authentication
 
 - Mock authentication for local development.
-- Supabase email OTP request adapter for live auth mode using the publishable
-  client key.
+- Supabase email OTP adapter for live auth mode using the publishable client
+  key.
+- Native callback handling for token-fragment and PKCE-style session URLs.
+- Persisted Supabase sessions, launch-time session hydration, and Supabase
+  sign-out in live auth mode.
 - Pending verification results do not unlock protected actions.
 - Email validation and surfaced network/provider errors.
 
@@ -110,8 +113,8 @@ implementations.
 
 ## Still Required For A Functional Live MVP
 
-1. Complete the Supabase deep-link callback, session hydration, refresh, and
-   server-verified logout flow.
+1. Link a Supabase project, add `restoreai://**` to the Auth redirect allow-list,
+   and verify OTP sign-in on a native build.
 2. Convert the single in-memory screen state machine into Expo Router auth and
    protected route groups.
 3. Link a Supabase project, generate migrations, apply the schema, and test RLS

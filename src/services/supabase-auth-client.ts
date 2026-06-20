@@ -1,87 +1,136 @@
-import { appConfig } from "../config/env";
+import * as Linking from "expo-linking";
+import type { Session, User } from "@supabase/supabase-js";
+import { getRestoreAiSupabaseClient } from "./supabase-client";
 import type { Account } from "../types";
 import type { AuthClient, AuthResult } from "./contracts";
-
-const restoreAiRedirectUrl = "restoreai://auth/callback";
 
 export const supabaseAuthClient: AuthClient = {
   async signIn(email: string): Promise<AuthResult> {
     const normalizedEmail = normalizeEmail(email);
-    const config = getSupabaseAuthConfig();
+    const supabase = getRestoreAiSupabaseClient();
 
-    await requestEmailOtp(config, normalizedEmail);
+    const existing = await supabase.auth.getSession();
+    if (existing.data.session) {
+      return {
+        account: accountFromSession(existing.data.session),
+        notice: "Existing RestoreAI session restored.",
+      };
+    }
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email: normalizedEmail,
+      options: {
+        emailRedirectTo: getAuthRedirectUrl(),
+      },
+    });
+
+    if (error) throw new Error(error.message);
 
     return {
       account: createPendingAccount(normalizedEmail),
       requiresVerification: true,
       notice:
-        "Check your email for the RestoreAI sign-in link. This build now sends live Supabase Auth requests; the native callback confirmation screen is the next auth step.",
+        "Check your email for the RestoreAI sign-in link. This build can now complete the callback and persist the Supabase session.",
     };
   },
   async signOut(): Promise<Account> {
+    const supabase = getRestoreAiSupabaseClient();
+    const { error } = await supabase.auth.signOut();
+    if (error) throw new Error(error.message);
     return createSignedOutAccount();
+  },
+  async getCurrentAccount(): Promise<Account> {
+    const supabase = getRestoreAiSupabaseClient();
+    const { data, error } = await supabase.auth.getSession();
+    if (error) throw new Error(error.message);
+    return data.session ? accountFromSession(data.session) : createSignedOutAccount();
+  },
+  async handleAuthCallback(url: string): Promise<AuthResult | undefined> {
+    const authParams = getAuthParams(url);
+    if (!authParams) return undefined;
+
+    const supabase = getRestoreAiSupabaseClient();
+    let session: Session | null = null;
+
+    if (authParams.error) {
+      throw new Error(authParams.error);
+    }
+
+    if (authParams.code) {
+      const { data, error } = await supabase.auth.exchangeCodeForSession(authParams.code);
+      if (error) throw new Error(error.message);
+      session = data.session;
+    } else if (authParams.accessToken && authParams.refreshToken) {
+      const { data, error } = await supabase.auth.setSession({
+        access_token: authParams.accessToken,
+        refresh_token: authParams.refreshToken,
+      });
+      if (error) throw new Error(error.message);
+      session = data.session;
+    }
+
+    if (!session) return undefined;
+
+    return {
+      account: accountFromSession(session),
+      notice: "Signed in with Supabase.",
+    };
   },
 };
 
-type SupabaseAuthConfig = {
-  url: string;
-  publishableKey: string;
+type AuthParams = {
+  accessToken?: string;
+  refreshToken?: string;
+  code?: string;
+  error?: string;
 };
 
-function getSupabaseAuthConfig(): SupabaseAuthConfig {
-  const supabaseUrl = appConfig.supabaseUrl;
-  const supabasePublishableKey = appConfig.supabasePublishableKey;
-  const missing: string[] = [];
-  if (!supabaseUrl) missing.push("EXPO_PUBLIC_SUPABASE_URL");
-  if (!supabasePublishableKey) missing.push("EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
+export function getAuthRedirectUrl() {
+  return Linking.createURL("auth/callback");
+}
 
-  if (!supabaseUrl || !supabasePublishableKey) {
-    throw new Error(`Supabase Auth is live, but missing ${missing.join(", ")}.`);
-  }
+function getAuthParams(url: string): AuthParams | undefined {
+  const params = new URLSearchParams();
+  const [, queryAndHash = ""] = url.split("?");
+  const [query = "", hashFromQuery = ""] = queryAndHash.split("#");
+  const [, hashOnly = ""] = url.split("#");
+
+  appendSearchParams(params, query);
+  appendSearchParams(params, hashFromQuery || hashOnly);
+
+  const accessToken = params.get("access_token") ?? undefined;
+  const refreshToken = params.get("refresh_token") ?? undefined;
+  const code = params.get("code") ?? undefined;
+  const error = params.get("error_description") ?? params.get("error") ?? undefined;
+
+  if (!accessToken && !refreshToken && !code && !error) return undefined;
+
+  return { accessToken, refreshToken, code, error };
+}
+
+function appendSearchParams(target: URLSearchParams, value: string) {
+  if (!value) return;
+  const source = new URLSearchParams(value);
+  source.forEach((paramValue, key) => target.set(key, paramValue));
+}
+
+function accountFromSession(session: Session): Account {
+  return accountFromUser(session.user);
+}
+
+function accountFromUser(user: User): Account {
+  const email = user.email ?? "verified@restoreai.local";
+  const metadataName = getString(user.user_metadata?.full_name) ?? getString(user.user_metadata?.name);
 
   return {
-    url: supabaseUrl.replace(/\/+$/, ""),
-    publishableKey: supabasePublishableKey,
+    signedIn: true,
+    name: metadataName ?? email.split("@")[0] ?? "Archivist",
+    email,
+    plan: "Free",
+    creditsUsed: 0,
+    creditsTotal: 20,
+    renewsInDays: 30,
   };
-}
-
-async function requestEmailOtp(config: SupabaseAuthConfig, email: string) {
-  const endpoint = `${config.url}/auth/v1/otp?redirect_to=${encodeURIComponent(restoreAiRedirectUrl)}`;
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      apikey: config.publishableKey,
-      Authorization: `Bearer ${config.publishableKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      email,
-      create_user: true,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(await readSupabaseAuthError(response));
-  }
-}
-
-async function readSupabaseAuthError(response: Response) {
-  const fallback = `Supabase Auth request failed with HTTP ${response.status}.`;
-  const text = await response.text().catch(() => "");
-  if (!text) return fallback;
-
-  try {
-    const payload = JSON.parse(text) as Record<string, unknown>;
-    const message =
-      getString(payload.message) ??
-      getString(payload.msg) ??
-      getString(payload.error_description) ??
-      getString(payload.error);
-
-    return message ? `Supabase Auth: ${message}` : fallback;
-  } catch {
-    return fallback;
-  }
 }
 
 function getString(value: unknown) {

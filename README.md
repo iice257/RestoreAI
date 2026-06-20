@@ -4,8 +4,8 @@ RestoreAI is an Expo mobile app for restoring, upscaling, extending, and recolor
 
 This implementation is a local MVP prototype. It has a polished visual demo, but the production foundations are still being scaffolded:
 
-- Mock auth and subscription flows with persistent account state, plus a partial
-  live Supabase email OTP request path.
+- Mock auth and subscription flows with persistent account state, plus a live
+  Supabase email OTP path with callback/session handling when configured.
 - Mock AI image workflows with realistic progress, privacy consent, credits, retries, and remote deletion state.
 - Non-destructive stacked edits: source images are preserved, and every edit/export becomes a timeline stage.
 - Code-native and reference-image screens built from the supplied premium mobile design references.

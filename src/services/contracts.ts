@@ -9,6 +9,8 @@ export type AuthResult = {
 export type AuthClient = {
   signIn(email: string): Promise<AuthResult>;
   signOut(): Promise<Account>;
+  getCurrentAccount?(): Promise<Account>;
+  handleAuthCallback?(url: string): Promise<AuthResult | undefined>;
 };
 
 export type BillingClient = {

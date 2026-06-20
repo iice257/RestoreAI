@@ -5,7 +5,7 @@ RestoreAI is not production-ready. This checklist tracks the foundations that mu
 ## Mobile App
 
 - Expo Router route groups for auth, protected app screens, modals, and error states.
-- Native Supabase auth callback handling for `restoreai://auth/callback`, session hydration, refresh, and logout.
+- Native Supabase auth callback handling for `restoreai://auth/callback`, session hydration, refresh, and logout verified on EAS/dev-client builds.
 - Real device testing on iOS and Android.
 - Camera, media library, file import, save, share, and permission-denied paths.
 - Offline and retry behavior for uploads and processing jobs.

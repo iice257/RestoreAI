@@ -1,6 +1,7 @@
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
+import * as Linking from "expo-linking";
 import * as MediaLibrary from "expo-media-library";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useMemo, useState } from "react";
@@ -98,6 +99,7 @@ function RestoreAIRoot() {
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const incomingAuthUrl = Linking.useURL();
 
   const selectedProject = projects.find((project) => project.id === selectedProjectId) ?? projects[0];
   const currentStage = getActiveStage(selectedProject);
@@ -128,6 +130,38 @@ function RestoreAIRoot() {
     if (screen === "splash") return;
     saveState({ account, prefs, projects }).catch(() => undefined);
   }, [account, prefs, projects, screen]);
+
+  useEffect(() => {
+    const getCurrentAccount = authClient.getCurrentAccount;
+    if (!getCurrentAccount) return;
+    let mounted = true;
+    getCurrentAccount()
+      .then((nextAccount) => {
+        if (mounted && isSignedIn(nextAccount)) setAccount(nextAccount);
+      })
+      .catch((error) => {
+        if (mounted) setMessage(error instanceof Error ? error.message : "Unable to restore the current session.");
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleAuthCallback = authClient.handleAuthCallback;
+    if (!incomingAuthUrl || !handleAuthCallback) return;
+    let mounted = true;
+    handleAuthCallback(incomingAuthUrl)
+      .then((result) => {
+        if (mounted && result) handleAuthResult(result);
+      })
+      .catch((error) => {
+        if (mounted) setMessage(error instanceof Error ? error.message : "Unable to complete sign-in.");
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [incomingAuthUrl]);
 
   function navigate(next: Screen, options: { preserveMessage?: boolean } = {}) {
     Haptics.selectionAsync().catch(() => undefined);
@@ -848,25 +882,30 @@ function AccountScreen({ account, message, setAccount, setMessage, setPrefs, nav
   const [busy, setBusy] = useState(false);
   async function run(action: "upgrade" | "cancel" | "restore" | "logout") {
     setBusy(true);
-    if (action === "upgrade") {
-      setAccount(await billingClient.upgrade(account));
-      setMessage("Archive Pro is active for this local MVP session.");
+    try {
+      if (action === "upgrade") {
+        setAccount(await billingClient.upgrade(account));
+        setMessage("Archive Pro is active for this local MVP session.");
+      }
+      if (action === "cancel") {
+        const nextAccount = await billingClient.cancel(account);
+        setAccount(nextAccount);
+        setPrefs((value) => ({ ...value, exportFormat: getAllowedExportFormat(nextAccount, value.exportFormat) }));
+        setMessage("Archive Pro was canceled. Pro tools and archive exports are locked.");
+      }
+      if (action === "restore") {
+        setAccount(await billingClient.restorePurchases(account));
+        setMessage("Purchases restored for this local MVP session.");
+      }
+      if (action === "logout") {
+        setAccount(await authClient.signOut());
+        setMessage("");
+      }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Account action failed.");
+    } finally {
+      setBusy(false);
     }
-    if (action === "cancel") {
-      const nextAccount = await billingClient.cancel(account);
-      setAccount(nextAccount);
-      setPrefs((value) => ({ ...value, exportFormat: getAllowedExportFormat(nextAccount, value.exportFormat) }));
-      setMessage("Archive Pro was canceled. Pro tools and archive exports are locked.");
-    }
-    if (action === "restore") {
-      setAccount(await billingClient.restorePurchases(account));
-      setMessage("Purchases restored for this local MVP session.");
-    }
-    if (action === "logout") {
-      setAccount(await authClient.signOut());
-      setMessage("");
-    }
-    setBusy(false);
   }
   return (
     <ScreenScroll flush>
