@@ -44,3 +44,11 @@ expo-start*.log
 # generated native folders
 /ios
 /android
+
+# temporary workspace output
+tmp/
+
+# local browser automation artifacts
+.playwright-mcp/
+polish-*.png
+restoreai-*-fidelity.png
