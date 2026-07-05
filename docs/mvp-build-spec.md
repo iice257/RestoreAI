@@ -1,8 +1,8 @@
-# RestoreAI MVP Build Spec
+﻿# RestoreAI MVP Build Spec
 
-Status: Draft for first native iOS release  
+Status: Draft for first Expo iOS release  
 Source: Current README product blueprint  
-Platform decision: Native iOS app built with SwiftUI. Expo, Android, and web are out of scope for the first release.
+Platform decision: Expo managed app targeting iOS first. Native SwiftUI is out of scope for the first release unless the Expo plan changes.
 
 ## 1. Product Goal
 
@@ -20,7 +20,7 @@ The MVP should prove one complete value loop:
 
 ### In Scope
 
-- Native iOS app shell using SwiftUI.
+- Expo iOS app shell using Expo Router and React Native.
 - Single-image import from Photos or Files.
 - Preview-safe image normalization after import.
 - Auto Restore action that runs the default restoration pipeline.
@@ -340,7 +340,7 @@ Acceptance criteria:
 - Exported images match the chosen format, scale, and visible adjustments.
 - Privacy mode behavior is explicit and testable.
 - No account is required to complete the MVP flow.
-- The first release is implemented as a native SwiftUI iOS app, not Expo.
+- The first release is implemented as an Expo iOS app, with native builds handled by EAS.
 
 ## 9. Open Product Decisions
 
@@ -350,3 +350,4 @@ Acceptance criteria:
 - Whether scratch/dust removal is included in Auto Restore MVP or deferred to Phase 2 as a visible control.
 - Cloud retention duration for originals and outputs.
 - Export watermark policy, if any.
+

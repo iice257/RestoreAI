@@ -1,8 +1,8 @@
-# RestoreAI Initial Technical Architecture
+﻿# RestoreAI Initial Technical Architecture
 
-Status: Draft architecture for first native iOS release  
+Status: Draft architecture for first Expo iOS release  
 Source: Current README product blueprint and MVP scope  
-Platform decision: Native SwiftUI iOS app for v1. Expo, Android, and web are not part of the first implementation.
+Platform decision: Expo managed app for v1, targeting iOS first with Expo Go/EAS as the delivery path.
 
 ## 1. Architecture Goals
 
@@ -46,12 +46,12 @@ The first version is an iOS app with these major areas:
   - Cloud retention explanation.
   - Basic diagnostics and app version.
 
-## 3. Native iOS Client Structure
+## 3. Expo Client Structure
 
-Recommended SwiftUI module boundaries:
+Recommended Expo/React Native module boundaries:
 
 - App Shell
-  - SwiftUI `App`, root tab or single navigation stack, app-level dependency injection.
+  - Expo Router root layout, app-level providers, safe-area handling, and navigation wiring.
 
 - Restore Feature
   - Import flow.
@@ -82,7 +82,7 @@ Recommended SwiftUI module boundaries:
   - Export renderer.
   - Metadata sanitizer.
 
-SwiftUI state should stay feature-local when possible. Shared services can be injected through the environment, while project and job records should use explicit models that can be tested without views.
+React state should stay feature-local when possible. Shared services should be imported through thin client modules or injected at feature boundaries, while project and job records should use explicit models that can be tested without views.
 
 ## 4. Restoration Pipeline Stages
 
@@ -438,7 +438,7 @@ Avoid:
 
 ## 14. First Implementation Sequence
 
-1. Create native SwiftUI app shell and local project model.
+1. Finalize Expo Router app shell and local project model.
 2. Implement Photos/Files import and immutable local working copy.
 3. Build import preview and processing mode selector.
 4. Stub restore job service with local mocked states.
@@ -459,3 +459,4 @@ Avoid:
 - Exact cloud retention window.
 - Whether local project records should be automatically purged.
 - App Store privacy nutrition label details once vendors are selected.
+
