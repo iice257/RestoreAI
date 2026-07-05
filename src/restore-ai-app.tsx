@@ -25,7 +25,7 @@ import Animated, {
   useSharedValue,
 } from "react-native-reanimated";
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
-import { referenceImages, sampleImages } from "./assets";
+import { sampleImages } from "./assets";
 import {
   appendExport,
   appendStage,
@@ -72,11 +72,39 @@ type Screen =
   | "error"
   | "privacy";
 
-const toolCopy: Record<ToolType, { title: string; icon: string; body: string; accent: string }> = {
-  restore: { title: "Restore", icon: "++", body: "Repair damage and recover tone", accent: colors.teal },
-  upscale: { title: "Upscale", icon: "NE", body: "Enlarge without harsh edges", accent: colors.amber },
-  extend: { title: "Extend", icon: "[]", body: "Adjust aspect and preserve subject", accent: colors.teal },
-  recolor: { title: "Recolor", icon: "**", body: "Add natural color to B&W photos", accent: colors.garnet },
+type AppIconName =
+  | "restore"
+  | "upscale"
+  | "extend"
+  | "recolor"
+  | "home"
+  | "import"
+  | "library"
+  | "settings"
+  | "account"
+  | "back"
+  | "close"
+  | "tips"
+  | "export"
+  | "camera"
+  | "photos"
+  | "files"
+  | "samples"
+  | "shield"
+  | "save"
+  | "share"
+  | "edit"
+  | "details"
+  | "check"
+  | "lock";
+
+type WorkflowOption = { key: string; icon: AppIconName; title: string; body: string };
+
+const toolCopy: Record<ToolType, { title: string; icon: AppIconName; body: string; accent: string }> = {
+  restore: { title: "Restore", icon: "restore", body: "Repair damage and recover tone", accent: colors.teal },
+  upscale: { title: "Upscale", icon: "upscale", body: "Enlarge without harsh edges", accent: colors.amber },
+  extend: { title: "Extend", icon: "extend", body: "Adjust aspect and preserve subject", accent: colors.teal },
+  recolor: { title: "Recolor", icon: "recolor", body: "Add natural color to B&W photos", accent: colors.garnet },
 };
 
 export default function RestoreAIApp() {
@@ -382,97 +410,162 @@ function RestoreAIRoot() {
   );
 }
 
-function PixelScreen({ source, children }: { source: number; children: React.ReactNode }) {
-  return (
-    <View style={{ flex: 1, backgroundColor: "#050606" }}>
-      <Image source={source} contentFit="fill" style={{ position: "absolute", inset: 0 }} />
-      {children}
-    </View>
-  );
-}
-
-function Hit({ x, y, w, h, onPress, label }: { x: number; y: number; w: number; h: number; onPress: () => void; label: string }) {
-  return (
-    <Pressable
-      accessibilityLabel={label}
-      onPress={onPress}
-      style={{
-        position: "absolute",
-        left: `${x}%`,
-        top: `${y}%`,
-        width: `${w}%`,
-        height: `${h}%`,
-      }}
-    />
-  );
-}
-
-function PixelHomeScreen({ selectTool, navigate }: { selectTool: (tool: ToolType) => void; navigate: (screen: Screen) => void }) {
-  return (
-    <PixelScreen source={referenceImages.home}>
-      <Hit label="View result" x={5} y={16} w={90} h={31} onPress={() => navigate("comparison")} />
-      <Hit label="Account" x={73} y={5} w={10} h={6} onPress={() => navigate("account")} />
-      <Hit label="Profile" x={85} y={5} w={10} h={6} onPress={() => navigate("settings")} />
-      <Hit label="Restore" x={5} y={51} w={22} h={16} onPress={() => selectTool("restore")} />
-      <Hit label="Upscale" x={29} y={51} w={21} h={16} onPress={() => selectTool("upscale")} />
-      <Hit label="Extend" x={52} y={51} w={21} h={16} onPress={() => selectTool("extend")} />
-      <Hit label="Recolor" x={76} y={51} w={20} h={16} onPress={() => selectTool("recolor")} />
-      <Hit label="Try smart restore" x={34} y={82} w={39} h={5} onPress={() => selectTool("restore")} />
-      <Hit label="Import tab" x={25} y={90} w={19} h={8} onPress={() => navigate("import")} />
-      <Hit label="Library tab" x={52} y={90} w={18} h={8} onPress={() => navigate("library")} />
-      <Hit label="Settings tab" x={78} y={90} w={18} h={8} onPress={() => navigate("settings")} />
-    </PixelScreen>
-  );
-}
-
-function PixelImportScreen({ pickImage, importSample, navigate }: { pickImage: (source: "camera" | "library" | "files") => void; importSample: (asset?: Project["sourceAsset"]) => void; navigate: (screen: Screen) => void }) {
-  return (
-    <PixelScreen source={referenceImages.import}>
-      <Hit label="Back" x={5} y={5} w={12} h={7} onPress={() => navigate("home")} />
-      <Hit label="Account" x={84} y={5} w={11} h={7} onPress={() => navigate("account")} />
-      <Hit label="Add a photo" x={6} y={20} w={88} h={31} onPress={() => importSample("portrait")} />
-      <Hit label="Camera" x={5} y={54} w={21} h={11} onPress={() => pickImage("camera")} />
-      <Hit label="Photo library" x={28} y={54} w={21} h={11} onPress={() => pickImage("library")} />
-      <Hit label="Files" x={51} y={54} w={21} h={11} onPress={() => pickImage("files")} />
-      <Hit label="Sample images" x={74} y={54} w={21} h={11} onPress={() => importSample("archive")} />
-      <Hit label="Sample portrait" x={5} y={72} w={20} h={13} onPress={() => importSample("portrait")} />
-      <Hit label="Sample archive" x={28} y={72} w={21} h={13} onPress={() => importSample("archive")} />
-      <Hit label="Sample family" x={51} y={72} w={21} h={13} onPress={() => importSample("family")} />
-      <Hit label="Learn more" x={69} y={89} w={25} h={7} onPress={() => navigate("privacy")} />
-    </PixelScreen>
-  );
-}
-
-function PixelRestoreScreen({ startProcessing, navigate }: { startProcessing: (settings: EditStage["settings"]) => void; navigate: (screen: Screen) => void }) {
-  return (
-    <PixelScreen source={referenceImages.restore}>
-      <Hit label="Back" x={5} y={5} w={12} h={7} onPress={() => navigate("home")} />
-      <Hit label="Tips" x={79} y={6} w={16} h={6} onPress={() => Alert.alert("Tips", "Stack edits from any timeline stage. The original file is never overwritten.")} />
-      <Hit label="Scratch repair" x={5} y={64} w={22} h={14} onPress={() => undefined} />
-      <Hit label="Fade recovery" x={29} y={64} w={22} h={14} onPress={() => undefined} />
-      <Hit label="Blur cleanup" x={52} y={64} w={22} h={14} onPress={() => undefined} />
-      <Hit label="Detail recovery" x={76} y={64} w={21} h={14} onPress={() => undefined} />
-      <Hit label="Restore photo" x={5} y={87} w={90} h={7} onPress={() => startProcessing({ scratch: true, fade: true, blur: true, detail: true, intensity: "balanced" })} />
-    </PixelScreen>
-  );
-}
-
-function PixelComparisonScreen({ exportCurrent, selectTool, navigate }: { exportCurrent: () => void; selectTool: (tool: ToolType) => void; navigate: (screen: Screen) => void }) {
-  return (
-    <PixelScreen source={referenceImages.comparison}>
-      <Hit label="Back" x={5} y={5} w={12} h={7} onPress={() => navigate("home")} />
-      <Hit label="Export" x={74} y={5} w={21} h={6} onPress={exportCurrent} />
-      <Hit label="Edit" x={80} y={74} w={15} h={5} onPress={() => selectTool("upscale")} />
-      <Hit label="Save" x={4} y={90} w={22} h={7} onPress={exportCurrent} />
-      <Hit label="Share" x={28} y={90} w={22} h={7} onPress={() => Share.share({ message: "RestoreAI result ready for review." })} />
-      <Hit label="More" x={51} y={90} w={23} h={7} onPress={() => navigate("detail")} />
-      <Hit label="Favorite" x={76} y={90} w={21} h={7} onPress={() => navigate("detail")} />
-    </PixelScreen>
-  );
-}
-
 function stageImageSource(stage: Pick<EditStage, "outputAsset" | "outputUri">) {
   return stage.outputUri ? { uri: stage.outputUri } : sampleImages[stage.outputAsset];
+}
+
+function IconPrimitive({ name, color = colors.amber, size = 28, style }: { name: AppIconName; color?: string; size?: number; style?: object }) {
+  const stroke = Math.max(2, Math.round(size / 12));
+  const line = {
+    position: "absolute" as const,
+    height: stroke,
+    borderRadius: stroke,
+    backgroundColor: color,
+  };
+  const dotStyle = (diameter: number, extra?: object) => ({
+    position: "absolute" as const,
+    width: diameter,
+    height: diameter,
+    borderRadius: 99,
+    backgroundColor: color,
+    ...extra,
+  });
+  const box = [styles.iconGlyph, { width: size, height: size }, style];
+
+  if (name === "back") {
+    return (
+      <View style={box}>
+        <View style={[line, { width: size * 0.52, left: size * 0.2, top: size * 0.34, transform: [{ rotate: "-42deg" }] }]} />
+        <View style={[line, { width: size * 0.52, left: size * 0.2, top: size * 0.62, transform: [{ rotate: "42deg" }] }]} />
+      </View>
+    );
+  }
+
+  if (name === "close") {
+    return (
+      <View style={box}>
+        <View style={[line, { width: size * 0.62, left: size * 0.19, top: size * 0.49, transform: [{ rotate: "45deg" }] }]} />
+        <View style={[line, { width: size * 0.62, left: size * 0.19, top: size * 0.49, transform: [{ rotate: "-45deg" }] }]} />
+      </View>
+    );
+  }
+
+  if (name === "upscale" || name === "export") {
+    return (
+      <View style={box}>
+        <View style={[line, { width: size * 0.58, left: size * 0.23, top: name === "export" ? size * 0.32 : size * 0.42, transform: [{ rotate: "-45deg" }] }]} />
+        <View style={[line, { width: size * 0.26, right: size * 0.16, top: name === "export" ? size * 0.18 : size * 0.28 }]} />
+        <View style={[line, { width: size * 0.26, right: size * 0.04, top: name === "export" ? size * 0.29 : size * 0.39, transform: [{ rotate: "90deg" }] }]} />
+        {name === "export" ? <View style={[line, { width: size * 0.66, left: size * 0.17, bottom: size * 0.13 }]} /> : null}
+      </View>
+    );
+  }
+
+  if (name === "restore" || name === "tips") {
+    return (
+      <View style={box}>
+        <View style={[line, { width: size * 0.7, left: size * 0.15, top: size * 0.49 }]} />
+        <View style={[line, { width: size * 0.7, left: size * 0.15, top: size * 0.49, transform: [{ rotate: "90deg" }] }]} />
+        <View style={[line, { width: size * 0.48, left: size * 0.26, top: size * 0.49, transform: [{ rotate: "45deg" }] }]} />
+        <View style={[line, { width: size * 0.48, left: size * 0.26, top: size * 0.49, transform: [{ rotate: "-45deg" }] }]} />
+      </View>
+    );
+  }
+
+  if (name === "extend" || name === "photos" || name === "library") {
+    return (
+      <View style={box}>
+        <View style={[styles.iconFrame, { width: size * 0.7, height: size * 0.58, left: size * 0.18, top: size * 0.22, borderColor: color, borderWidth: stroke }]} />
+        {name !== "extend" ? <View style={[styles.iconFrame, { width: size * 0.52, height: size * 0.44, left: size * 0.08, top: size * 0.12, borderColor: color, borderWidth: stroke, opacity: 0.55 }]} /> : null}
+      </View>
+    );
+  }
+
+  if (name === "recolor") {
+    return (
+      <View style={box}>
+        <View style={[styles.iconCircle, { width: size * 0.72, height: size * 0.72, left: size * 0.14, top: size * 0.14, borderColor: color, borderWidth: stroke }]} />
+        <View style={dotStyle(size * 0.28, { left: size * 0.36, top: size * 0.36, opacity: 0.72 })} />
+      </View>
+    );
+  }
+
+  if (name === "camera") {
+    return (
+      <View style={box}>
+        <View style={[styles.iconFrame, { width: size * 0.76, height: size * 0.54, left: size * 0.12, top: size * 0.28, borderColor: color, borderWidth: stroke }]} />
+        <View style={[styles.iconCircle, { width: size * 0.28, height: size * 0.28, left: size * 0.36, top: size * 0.41, borderColor: color, borderWidth: stroke }]} />
+        <View style={[line, { width: size * 0.24, left: size * 0.25, top: size * 0.2 }]} />
+      </View>
+    );
+  }
+
+  if (name === "files" || name === "save") {
+    return (
+      <View style={box}>
+        <View style={[styles.iconFrame, { width: size * 0.58, height: size * 0.72, left: size * 0.21, top: size * 0.12, borderColor: color, borderWidth: stroke }]} />
+        <View style={[line, { width: size * 0.34, left: size * 0.33, top: size * 0.38 }]} />
+        <View style={[line, { width: size * 0.34, left: size * 0.33, top: size * 0.56 }]} />
+      </View>
+    );
+  }
+
+  if (name === "import") {
+    return (
+      <View style={box}>
+        <View style={[line, { width: size * 0.52, left: size * 0.24, top: size * 0.68 }]} />
+        <View style={[line, { width: size * 0.42, left: size * 0.29, top: size * 0.4, transform: [{ rotate: "90deg" }] }]} />
+        <View style={[line, { width: size * 0.26, left: size * 0.29, top: size * 0.52, transform: [{ rotate: "42deg" }] }]} />
+        <View style={[line, { width: size * 0.26, right: size * 0.29, top: size * 0.52, transform: [{ rotate: "-42deg" }] }]} />
+      </View>
+    );
+  }
+
+  if (name === "share" || name === "samples") {
+    return (
+      <View style={box}>
+        <View style={[line, { width: size * 0.42, left: size * 0.31, top: size * 0.36, transform: [{ rotate: "-24deg" }], opacity: 0.7 }]} />
+        <View style={[line, { width: size * 0.42, left: size * 0.31, top: size * 0.6, transform: [{ rotate: "24deg" }], opacity: 0.7 }]} />
+        <View style={dotStyle(size * 0.18, { left: size * 0.14, top: size * 0.42 })} />
+        <View style={dotStyle(size * 0.18, { right: size * 0.14, top: size * 0.22 })} />
+        <View style={dotStyle(size * 0.18, { right: size * 0.14, bottom: size * 0.18 })} />
+      </View>
+    );
+  }
+
+  if (name === "edit") {
+    return (
+      <View style={box}>
+        <View style={[line, { width: size * 0.66, left: size * 0.22, top: size * 0.5, transform: [{ rotate: "-36deg" }] }]} />
+        <View style={[line, { width: size * 0.36, left: size * 0.2, bottom: size * 0.17 }]} />
+      </View>
+    );
+  }
+
+  if (name === "home") {
+    return (
+      <View style={box}>
+        <View style={[line, { width: size * 0.52, left: size * 0.24, top: size * 0.34, transform: [{ rotate: "-34deg" }] }]} />
+        <View style={[line, { width: size * 0.52, right: size * 0.24, top: size * 0.34, transform: [{ rotate: "34deg" }] }]} />
+        <View style={[styles.iconFrame, { width: size * 0.48, height: size * 0.42, left: size * 0.26, top: size * 0.42, borderColor: color, borderWidth: stroke }]} />
+      </View>
+    );
+  }
+
+  if (name === "settings" || name === "account" || name === "details" || name === "shield" || name === "check" || name === "lock") {
+    return (
+      <View style={box}>
+        <View style={[styles.iconCircle, { width: size * 0.68, height: size * 0.68, left: size * 0.16, top: size * 0.16, borderColor: color, borderWidth: stroke }]} />
+        <View style={dotStyle(name === "check" ? size * 0.16 : size * 0.25, { left: size * 0.38, top: size * 0.38 })} />
+      </View>
+    );
+  }
+
+  return (
+    <View style={box}>
+      <View style={[styles.iconCircle, { width: size * 0.7, height: size * 0.7, left: size * 0.15, top: size * 0.15, borderColor: color, borderWidth: stroke }]} />
+    </View>
+  );
 }
 
 function SplashScreen() {
@@ -482,7 +575,7 @@ function SplashScreen() {
       <View style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0,0,0,0.34)" }} />
       <View style={{ position: "absolute", top: 0, bottom: 0, width: 2, backgroundColor: colors.amber, opacity: 0.75 }} />
       <Animated.View entering={FadeIn.duration(700)} style={{ alignItems: "center", gap: 10 }}>
-        <Text selectable style={logoMark}>◇</Text>
+        <IconPrimitive name="restore" color={colors.amber} size={54} />
         <Text selectable style={brandTitle}>Restore<Text style={{ color: colors.amber }}>AI</Text></Text>
       </Animated.View>
     </View>
@@ -494,7 +587,7 @@ function OnboardingScreen({ prefs, setPrefs, goLogin, goHome }: { prefs: AppPref
     <ScreenScroll flush>
       <View style={mockStatusRow}>
         <Text style={mockStatusText}>9:41</Text>
-        <Text style={mockStatusText}>▮▮▮  Wi-Fi  ▰</Text>
+        <Text style={mockStatusText}>LTE  100%</Text>
       </View>
       <Pressable onPress={goHome} style={{ alignSelf: "flex-end", paddingHorizontal: 14, paddingVertical: 4 }}>
         <Text selectable style={{ color: colors.text, fontSize: 14 }}>Skip</Text>
@@ -508,9 +601,9 @@ function OnboardingScreen({ prefs, setPrefs, goLogin, goHome }: { prefs: AppPref
         <Image source={sampleImages.portrait} contentFit="cover" style={[photoStack, { width: 230, height: 250 }]} />
       </View>
       <View style={{ flexDirection: "row", justifyContent: "space-around", marginTop: 8 }}>
-        <OnboardingTool icon="✧" title="Restore" body="Repair damage and detail" />
-        <OnboardingTool icon="⌗" title="Enlarge" body="Upscale without losing quality" />
-        <OnboardingTool icon="◌" title="Recolor" body="Add natural colors" />
+        <OnboardingTool icon="restore" title="Restore" body="Repair damage and detail" />
+        <OnboardingTool icon="upscale" title="Enlarge" body="Upscale without losing quality" />
+        <OnboardingTool icon="recolor" title="Recolor" body="Add natural colors" />
       </View>
       <View style={{ flexDirection: "row", justifyContent: "center", gap: 8, marginTop: 22 }}>
         <View style={dotActive} />
@@ -567,9 +660,9 @@ function LoginScreen({
     <ScreenScroll flush>
       <View style={mockStatusRow}>
         <Text style={mockStatusText}>9:41</Text>
-        <Text style={mockStatusText}>▮▮▮  Wi-Fi  ▰</Text>
+        <Text style={mockStatusText}>LTE  100%</Text>
       </View>
-      <Text selectable style={[logoMark, { alignSelf: "center", marginTop: 22 }]}>◇</Text>
+      <IconPrimitive name="restore" color={colors.amber} size={54} style={{ alignSelf: "center", marginTop: 22 }} />
       <Text selectable style={[titleStyle, { textAlign: "center", marginTop: 8 }]}>Welcome back</Text>
       <View style={{ height: 230, marginTop: 20, alignItems: "center" }}>
         <Image source={sampleImages.family} contentFit="cover" style={[photoStack, { width: 250, height: 185, transform: [{ rotate: "-8deg" }, { translateX: -20 }] }]} />
@@ -605,10 +698,10 @@ function LoginScreen({
   );
 }
 
-function OnboardingTool({ icon, title, body }: { icon: string; title: string; body: string }) {
+function OnboardingTool({ icon, title, body }: { icon: AppIconName; title: string; body: string }) {
   return (
     <View style={{ width: "30%", alignItems: "center", gap: 8 }}>
-      <Text selectable style={{ color: colors.amber, fontSize: 34 }}>{icon}</Text>
+      <IconPrimitive name={icon} color={colors.amber} size={34} />
       <Text selectable style={[sectionTitle, { fontFamily: "Georgia", fontSize: 17, textAlign: "center" }]}>{title}</Text>
       <Text selectable style={{ color: colors.muted, textAlign: "center", fontSize: 13, lineHeight: 18 }}>{body}</Text>
     </View>
@@ -645,7 +738,7 @@ function HomeScreen({ account, project, selectTool, navigate, setActiveStage }: 
           <Text selectable style={bodyStyle}>Try a balanced restore from the current stage.</Text>
           <PrimaryButton compact label="Try Smart Restore" onPress={() => selectTool("restore")} />
         </View>
-        <IconButton label="x" onPress={() => setActiveStage(project.stages[0].id)} />
+        <IconButton label="Close" onPress={() => setActiveStage(project.stages[0].id)} />
       </Panel>
     </ScreenScroll>
   );
@@ -658,14 +751,15 @@ function ImportScreen({ busy, pickImage, importSample, navigate }: { busy: boole
       <Text selectable style={titleStyle}>Import Your Photo</Text>
       <Text selectable style={bodyStyle}>Start with a memory we can bring back to life.</Text>
       <Pressable onPress={() => importSample("portrait")} style={styles.dropZone}>
-        {busy ? <ActivityIndicator color={colors.amber} /> : <Text selectable style={{ color: colors.text, fontSize: 36 }}>Add a photo</Text>}
+        {busy ? <ActivityIndicator color={colors.amber} /> : <IconPrimitive name="import" size={52} color={colors.amber} />}
+        <Text selectable style={[sectionTitle, { fontSize: 28 }]}>Add a photo</Text>
         <Text selectable style={bodyStyle}>Tap a source below or try a sample.</Text>
       </Pressable>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
-        <ImportChoice title="Camera" subtitle="Take a new photo" onPress={() => pickImage("camera")} />
-        <ImportChoice title="Photo Library" subtitle="Choose from gallery" onPress={() => pickImage("library")} />
-        <ImportChoice title="Files" subtitle="From device" onPress={() => pickImage("files")} />
-        <ImportChoice title="Sample Images" subtitle="Try examples" onPress={() => importSample("archive")} />
+        <ImportChoice icon="camera" title="Camera" subtitle="Take a new photo" onPress={() => pickImage("camera")} />
+        <ImportChoice icon="photos" title="Photo Library" subtitle="Choose from gallery" onPress={() => pickImage("library")} />
+        <ImportChoice icon="files" title="Files" subtitle="From device" onPress={() => pickImage("files")} />
+        <ImportChoice icon="samples" title="Sample Images" subtitle="Try examples" onPress={() => importSample("archive")} />
       </View>
       <SectionHeader label="Try a sample" action="See all" onPress={() => navigate("library")} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
@@ -676,7 +770,7 @@ function ImportScreen({ busy, pickImage, importSample, navigate }: { busy: boole
         ))}
       </ScrollView>
       <Panel row>
-        <View style={styles.shield}><Text style={{ color: colors.teal }}>++</Text></View>
+        <View style={styles.shield}><IconPrimitive name="shield" color={colors.teal} size={34} /></View>
         <View style={{ flex: 1 }}>
           <Text selectable style={sectionTitle}>Your memories are safe</Text>
           <Text selectable style={bodyStyle}>We ask before any remote processing and preserve the original.</Text>
@@ -701,18 +795,22 @@ function WorkflowScreen({ tool, project, stage, startProcessing, setActiveStage,
       <Text selectable style={sectionTitle}>{tool === "restore" ? "AI Restoration Controls" : `${copy.title} Controls`}</Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
         {options.map((item) => (
-          <Pressable key={item.key} onPress={() => setEnabled((value) => ({ ...value, [item.key]: !value[item.key as keyof typeof value] }))} style={styles.controlCard}>
-            <Text style={{ color: copy.accent, fontSize: 24 }}>{item.icon}</Text>
+          <Pressable key={item.key} onPress={() => setEnabled((value) => ({ ...value, [item.key]: !value[item.key as keyof typeof value] }))} style={({ pressed }) => [styles.controlCard, pressed && styles.pressed]}>
+            <View style={[styles.controlIcon, { borderColor: copy.accent }]}>
+              <IconPrimitive name={item.icon} color={copy.accent} size={28} />
+            </View>
             <Text selectable style={styles.cardTitle}>{item.title}</Text>
             <Text selectable style={styles.cardBody}>{item.body}</Text>
-            <View style={[styles.toggle, enabled[item.key as keyof typeof enabled] && { backgroundColor: colors.amber }]} />
+            <View style={[styles.toggle, enabled[item.key as keyof typeof enabled] && { backgroundColor: colors.amber }]}>
+              <View style={[styles.toggleKnob, enabled[item.key as keyof typeof enabled] && { transform: [{ translateX: 25 }], backgroundColor: colors.black }]} />
+            </View>
           </Pressable>
         ))}
       </View>
       <Text selectable style={sectionTitle}>{tool === "upscale" ? "Target Resolution" : tool === "extend" ? "Frame Strength" : tool === "recolor" ? "Color Restraint" : "Repair Intensity"}</Text>
       <View style={styles.segmentRow}>
         {["Subtle", "Balanced", "Strong"].map((label, index) => (
-          <Pressable key={label} onPress={() => setIntensity(index + 1)} style={[styles.segment, intensity === index + 1 && styles.segmentActive]}>
+          <Pressable key={label} onPress={() => setIntensity(index + 1)} style={({ pressed }) => [styles.segment, intensity === index + 1 && styles.segmentActive, pressed && styles.pressed]}>
             <Text selectable style={{ color: intensity === index + 1 ? colors.black : colors.text }}>{label}</Text>
           </Pressable>
         ))}
@@ -760,7 +858,7 @@ function ComparisonScreen({ project, stage, setActiveStage, exportCurrent, selec
         <SecondaryButton compact label="Save" onPress={exportCurrent} />
         <SecondaryButton compact label="Share" onPress={() => Share.share({ message: "RestoreAI result ready for review." })} />
         <SecondaryButton compact label="Edit" onPress={() => selectTool("upscale")} />
-        <SecondaryButton compact label={project.favorite ? "Saved" : "Favorite"} onPress={() => navigate("detail")} />
+        <SecondaryButton compact label="Details" onPress={() => navigate("detail")} />
       </View>
     </ScreenScroll>
   );
@@ -778,7 +876,7 @@ function ExportScreen({ account, project, stage, prefs, selectExportFormat, mess
           {(["JPEG", "PNG", "TIFF"] as AppPreferences["exportFormat"][]).map((format) => {
             const allowed = canUseExportFormat(account, format);
             return (
-              <Pressable key={format} onPress={() => selectExportFormat(format)} style={[styles.segment, prefs.exportFormat === format && styles.segmentActive, !allowed && { opacity: 0.55 }]}>
+              <Pressable key={format} onPress={() => selectExportFormat(format)} style={({ pressed }) => [styles.segment, prefs.exportFormat === format && styles.segmentActive, !allowed && { opacity: 0.55 }, pressed && styles.pressed]}>
                 <Text selectable style={{ color: prefs.exportFormat === format ? colors.black : colors.text }}>{allowed ? format : `${format} Pro`}</Text>
               </Pressable>
             );
@@ -797,6 +895,12 @@ function ExportScreen({ account, project, stage, prefs, selectExportFormat, mess
 }
 
 function LibraryScreen({ projects, setProjects, setSelectedProjectId, navigate }: { projects: Project[]; setProjects: (projects: Project[]) => void; setSelectedProjectId: (id: string) => void; navigate: (screen: Screen) => void }) {
+  const [filter, setFilter] = useState<"All" | "Restored" | "Failed">("All");
+  const filteredProjects = projects.filter((project) => {
+    if (filter === "Restored") return project.stages.length > 1;
+    if (filter === "Failed") return project.stages.some((stage) => stage.remoteState === "deletion_unavailable");
+    return true;
+  });
   if (!projects.length) {
     return <StateScreen title="No projects yet" body="Import a photo or start with a sample archive image." action="Import photo" onAction={() => navigate("import")} />;
   }
@@ -804,10 +908,11 @@ function LibraryScreen({ projects, setProjects, setSelectedProjectId, navigate }
     <ScreenScroll withBottom>
       <Header title="Library" rightLabel="Import" onRight={() => navigate("import")} />
       <View style={styles.segmentRow}>
-        {["All", "Restored", "Failed"].map((label, index) => <Chip key={label} label={label} active={index === 0} />)}
+        {(["All", "Restored", "Failed"] as const).map((label) => <Chip key={label} label={label} active={filter === label} onPress={() => setFilter(label)} />)}
       </View>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
-        {projects.map((project) => {
+      {filteredProjects.length ? (
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
+          {filteredProjects.map((project) => {
           const stage = getActiveStage(project);
           return (
             <Pressable
@@ -817,15 +922,22 @@ function LibraryScreen({ projects, setProjects, setSelectedProjectId, navigate }
                 navigate("detail");
               }}
               onLongPress={() => setProjects(projects.filter((item) => item.id !== project.id))}
-              style={styles.libraryCard}
+              style={({ pressed }) => [styles.libraryCard, pressed && styles.pressed]}
             >
               <Image source={stageImageSource(stage)} contentFit="cover" style={{ width: "100%", height: 170, borderRadius: radii.md }} />
               <Text selectable style={styles.cardTitle}>{project.title}</Text>
               <Text selectable style={styles.cardBody}>{project.stages.length - 1} edits - {project.exports.length} exports</Text>
             </Pressable>
           );
-        })}
-      </View>
+          })}
+        </View>
+      ) : (
+        <Panel>
+          <Text selectable style={sectionTitle}>No {filter.toLowerCase()} projects</Text>
+          <Text selectable style={bodyStyle}>Change the filter or import a sample to keep working.</Text>
+          <SecondaryButton label="Show all" onPress={() => setFilter("All")} />
+        </Panel>
+      )}
     </ScreenScroll>
   );
 }
@@ -906,7 +1018,7 @@ function AccountScreen({ account, message, setAccount, setMessage, setPrefs, nav
     <ScreenScroll flush>
       <View style={mockStatusRow}>
         <Text style={mockStatusText}>9:41</Text>
-        <Text style={mockStatusText}>▮▮▮  Wi-Fi  ▰</Text>
+        <Text style={mockStatusText}>LTE  100%</Text>
       </View>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 18 }}>
         <IconButton label="<" onPress={() => navigate("settings")} />
@@ -924,12 +1036,12 @@ function AccountScreen({ account, message, setAccount, setMessage, setPrefs, nav
       <View style={subscriptionHero}>
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
           <Text selectable style={{ color: colors.amber, fontWeight: "700" }}>PREMIUM</Text>
-          <Text selectable style={{ color: colors.amber, fontSize: 34 }}>♛</Text>
+          <IconPrimitive name="account" color={colors.amber} size={32} />
         </View>
         <Text selectable style={[titleStyle, { fontSize: 42 }]}>Pro</Text>
         {["Full access to all tools", "Higher resolution exports", "Priority AI processing", "No watermark"].map((item) => (
           <View key={item} style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
-            <Text style={{ color: colors.amber }}>✓</Text>
+            <IconPrimitive name="check" color={colors.amber} size={16} />
             <Text selectable style={{ color: colors.text, fontSize: 15 }}>{item}</Text>
           </View>
         ))}
@@ -985,9 +1097,12 @@ function StateScreen({ title, body, action, onAction }: { title: string; body: s
 
 function BeforeAfter({ asset, uri }: { asset: keyof typeof sampleImages; uri?: string }) {
   const { width } = useWindowDimensions();
+  const [zoom, setZoom] = useState(100);
+  const [splitMode, setSplitMode] = useState(true);
   const reveal = useSharedValue(width * 0.5);
   const beforeSource = uri ? { uri } : sampleImages[asset];
   const afterSource = uri ? { uri } : sampleImages.portrait;
+  const zoomStyle = { transform: [{ scale: zoom / 100 }] };
   const gesture = Gesture.Pan().onUpdate((event) => {
     reveal.value = Math.max(44, Math.min(width - 44, event.absoluteX));
   });
@@ -996,16 +1111,16 @@ function BeforeAfter({ asset, uri }: { asset: keyof typeof sampleImages; uri?: s
   return (
     <GestureDetector gesture={gesture}>
       <View style={{ height: 520, borderRadius: radii.lg, overflow: "hidden", borderWidth: 1, borderColor: colors.stroke }}>
-        <Image source={beforeSource} contentFit="cover" style={{ position: "absolute", inset: 0 }} />
-        <Animated.View style={[{ position: "absolute", left: 0, top: 0, bottom: 0, overflow: "hidden", opacity: 0.64 }, overlayStyle]}>
-          <Image source={afterSource} contentFit="cover" style={{ width, height: 520 }} />
+        <Image source={beforeSource} contentFit="cover" style={[{ position: "absolute", inset: 0 }, zoomStyle]} />
+        <Animated.View style={[{ position: "absolute", left: 0, top: 0, bottom: 0, overflow: "hidden", opacity: splitMode ? 0.64 : 0.86 }, overlayStyle]}>
+          <Image source={afterSource} contentFit="cover" style={[{ width, height: 520 }, zoomStyle]} />
         </Animated.View>
-        <Animated.View style={[{ position: "absolute", top: 0, bottom: 0, width: 2, backgroundColor: colors.amber }, lineStyle]} />
+        <Animated.View style={[{ position: "absolute", top: 0, bottom: 0, width: splitMode ? 2 : 0, backgroundColor: colors.amber }, lineStyle]} />
         <Badge label="Before" style={{ left: 16, top: 16 }} />
         <Badge label="After" style={{ right: 16, top: 16 }} />
         <View style={{ position: "absolute", left: 20, bottom: 20, flexDirection: "row", gap: 8 }}>
-          <Chip label="-  100%  +" active />
-          <Chip label="Split" />
+          <Chip label={`${zoom}%`} active onPress={() => setZoom((value) => (value >= 150 ? 100 : value + 25))} />
+          <Chip label={splitMode ? "Split" : "Blend"} active={splitMode} onPress={() => setSplitMode((value) => !value)} />
         </View>
       </View>
     </GestureDetector>
@@ -1026,17 +1141,21 @@ function Timeline({ stages, activeId, onSelect }: { stages: EditStage[]; activeI
 }
 
 function BottomTabs({ active, navigate, bottom }: { active: string; navigate: (screen: Screen) => void; bottom: number }) {
-  const tabs: { key: Screen; label: string }[] = [
-    { key: "home", label: "Home" },
-    { key: "import", label: "Import" },
-    { key: "library", label: "Library" },
-    { key: "settings", label: "Settings" },
+  const tabs: { key: Screen; label: string; icon: AppIconName }[] = [
+    { key: "home", label: "Home", icon: "home" },
+    { key: "import", label: "Import", icon: "import" },
+    { key: "library", label: "Library", icon: "library" },
+    { key: "settings", label: "Settings", icon: "settings" },
   ];
   return (
     <View style={[styles.tabs, { paddingBottom: Math.max(bottom, 14) }]}>
       {tabs.map((tab) => (
-        <Pressable key={tab.key} onPress={() => navigate(tab.key)} style={{ alignItems: "center", gap: 5, flex: 1 }}>
-          <Text style={{ color: active === tab.key ? colors.amber : colors.muted, fontSize: 22 }}>{tab.label[0]}</Text>
+        <Pressable
+          key={tab.key}
+          onPress={() => navigate(tab.key)}
+          style={({ pressed }) => [styles.tabItem, active === tab.key && styles.tabItemActive, pressed && styles.pressed]}
+        >
+          <IconPrimitive name={tab.icon} color={active === tab.key ? colors.amber : colors.muted} size={24} />
           <Text selectable style={{ color: active === tab.key ? colors.amber : colors.muted, fontSize: 12 }}>{tab.label}</Text>
         </Pressable>
       ))}
@@ -1058,20 +1177,33 @@ function ScreenScroll({ children, withBottom = false, flush = false }: { childre
 
 function Header({ title, leftLabel, rightLabel, onLeft, onRight }: { title: string; leftLabel?: string; rightLabel?: string; onLeft?: () => void; onRight?: () => void }) {
   return (
-    <View style={{ minHeight: 56, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+    <View style={{ minHeight: 58, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
       <IconButton label={leftLabel ?? ""} onPress={onLeft} />
-      <Text selectable style={{ color: colors.text, fontSize: 34 }}>{title}</Text>
+      <Text selectable numberOfLines={1} adjustsFontSizeToFit style={{ color: colors.text, fontSize: 32, flex: 1, textAlign: "center" }}>{title}</Text>
       <IconButton label={rightLabel ?? ""} onPress={onRight} />
     </View>
   );
 }
 
 function IconButton({ label, onPress }: { label: string; onPress?: () => void }) {
+  if (!label || !onPress) return <View style={styles.iconSpacer} />;
+  const icon = getHeaderIcon(label);
   return (
-    <Pressable onPress={onPress} disabled={!onPress} style={styles.iconButton}>
-      <Text selectable style={{ color: colors.amber, fontSize: 15 }}>{label}</Text>
+    <Pressable accessibilityLabel={label} onPress={onPress} style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}>
+      {icon ? <IconPrimitive name={icon} color={colors.amber} size={24} /> : <Text selectable style={styles.iconButtonText}>{label}</Text>}
     </Pressable>
   );
+}
+
+function getHeaderIcon(label: string): AppIconName | undefined {
+  const value = label.toLowerCase();
+  if (value === "<" || value === "back") return "back";
+  if (value === "x" || value === "close") return "close";
+  if (value === "crown" || value === "account") return "account";
+  if (value === "tips") return "tips";
+  if (value === "export") return "export";
+  if (value === "import") return "import";
+  return undefined;
 }
 
 function HeroImage({ asset, uri, label, tall = false }: { asset: keyof typeof sampleImages; uri?: string; label: string; tall?: boolean }) {
@@ -1088,18 +1220,21 @@ function HeroImage({ asset, uri, label, tall = false }: { asset: keyof typeof sa
 function ToolCard({ tool, onPress }: { tool: ToolType; onPress: () => void }) {
   const copy = toolCopy[tool];
   return (
-    <Pressable onPress={onPress} style={styles.toolCard}>
-      <Text style={{ color: copy.accent, fontSize: 30 }}>{copy.icon}</Text>
-      <Text selectable style={styles.cardTitle}>{copy.title}</Text>
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.toolCard, pressed && styles.pressed]}>
+      <View style={[styles.iconWell, { borderColor: copy.accent, backgroundColor: `${copy.accent}22` }]}>
+        <IconPrimitive name={copy.icon} color={copy.accent} size={32} />
+      </View>
+      <Text selectable style={[styles.cardTitle, { fontSize: 19 }]}>{copy.title}</Text>
       <Text selectable style={styles.cardBody}>{copy.body}</Text>
     </Pressable>
   );
 }
 
-function ImportChoice({ title, subtitle, onPress }: { title: string; subtitle: string; onPress: () => void }) {
+function ImportChoice({ icon, title, subtitle, onPress }: { icon: AppIconName; title: string; subtitle: string; onPress: () => void }) {
   return (
-    <Pressable onPress={onPress} style={styles.importChoice}>
-      <Text selectable style={styles.cardTitle}>{title}</Text>
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.importChoice, pressed && styles.pressed]}>
+      <IconPrimitive name={icon} color={colors.amber} size={30} />
+      <Text selectable style={[styles.cardTitle, { fontSize: 17 }]}>{title}</Text>
       <Text selectable style={styles.cardBody}>{subtitle}</Text>
     </Pressable>
   );
@@ -1108,15 +1243,15 @@ function ImportChoice({ title, subtitle, onPress }: { title: string; subtitle: s
 function SectionHeader({ label, action, onPress }: { label: string; action?: string; onPress?: () => void }) {
   return (
     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-      <Text selectable style={{ color: colors.muted, textTransform: "uppercase", letterSpacing: 1.6 }}>{label}</Text>
-      {action ? <Pressable onPress={onPress}><Text selectable style={{ color: colors.amber }}>{action}</Text></Pressable> : null}
+      <Text selectable style={{ color: colors.muted, textTransform: "uppercase", letterSpacing: 0, fontSize: 12, fontWeight: "700" }}>{label}</Text>
+      {action && onPress ? <Pressable onPress={onPress} style={({ pressed }) => [styles.textAction, pressed && styles.pressed]}><Text selectable style={{ color: colors.amber, fontWeight: "700" }}>{action}</Text></Pressable> : null}
     </View>
   );
 }
 
 function PrimaryButton({ label, onPress, disabled, compact }: { label: string; onPress: () => void; disabled?: boolean; compact?: boolean }) {
   return (
-    <Pressable onPress={onPress} disabled={disabled} style={[styles.primary, compact && { paddingVertical: 12, minHeight: 0 }, disabled && { opacity: 0.6 }]}>
+    <Pressable onPress={onPress} disabled={disabled} style={({ pressed }) => [styles.primary, compact && { paddingVertical: 12, minHeight: 46 }, disabled && { opacity: 0.6 }, pressed && !disabled && styles.pressed]}>
       <Text selectable style={{ color: colors.black, fontSize: compact ? 15 : 18, fontWeight: "700" }}>{label}</Text>
     </Pressable>
   );
@@ -1124,7 +1259,7 @@ function PrimaryButton({ label, onPress, disabled, compact }: { label: string; o
 
 function SecondaryButton({ label, onPress, compact }: { label: string; onPress: () => void; compact?: boolean }) {
   return (
-    <Pressable onPress={onPress} style={[styles.secondary, compact && { flex: 1, minHeight: 54, paddingHorizontal: 8 }]}>
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.secondary, compact && { flex: 1, minHeight: 54, paddingHorizontal: 8 }, pressed && styles.pressed]}>
       <Text selectable style={{ color: colors.text, textAlign: "center" }}>{label}</Text>
     </Pressable>
   );
@@ -1134,11 +1269,14 @@ function Panel({ children, row = false, raised = false }: { children: React.Reac
   return <View style={[styles.panel, raised && styles.panelRaised, row && { flexDirection: "row", alignItems: "center" }]}>{children}</View>;
 }
 
-function Chip({ label, active = false }: { label: string; active?: boolean }) {
+function Chip({ label, active = false, onPress }: { label: string; active?: boolean; onPress?: () => void }) {
+  const content = <Text selectable style={{ color: active ? colors.amber : colors.muted, fontSize: 13, fontWeight: active ? "700" : "500" }}>{label}</Text>;
+  const chipStyle = [styles.chip, active && { backgroundColor: "rgba(239,177,106,0.18)", borderColor: colors.amber }];
+  if (!onPress) return <View style={chipStyle}>{content}</View>;
   return (
-    <View style={[styles.chip, active && { backgroundColor: "rgba(239,177,106,0.18)", borderColor: colors.amber }]}>
-      <Text selectable style={{ color: active ? colors.amber : colors.muted, fontSize: 13 }}>{label}</Text>
-    </View>
+    <Pressable accessibilityLabel={label} onPress={onPress} style={({ pressed }) => [chipStyle, pressed && styles.pressed]}>
+      {content}
+    </Pressable>
   );
 }
 
@@ -1191,36 +1329,36 @@ function SettingRow({ label, value, onChange }: { label: string; value: boolean;
   );
 }
 
-function getWorkflowOptions(tool: ToolType) {
+function getWorkflowOptions(tool: ToolType): WorkflowOption[] {
   if (tool === "upscale") {
     return [
-      { key: "detail", icon: "2x", title: "2x", body: "Balanced archive master" },
-      { key: "scratch", icon: "3x", title: "3x", body: "High detail print" },
-      { key: "fade", icon: "4x", title: "4x", body: "Safe max preview" },
-      { key: "blur", icon: "DPI", title: "300 DPI", body: "Print ready metadata" },
+      { key: "detail", icon: "upscale", title: "2x", body: "Balanced archive master" },
+      { key: "scratch", icon: "restore", title: "3x", body: "High detail print" },
+      { key: "fade", icon: "extend", title: "4x", body: "Safe max preview" },
+      { key: "blur", icon: "files", title: "300 DPI", body: "Print ready metadata" },
     ];
   }
   if (tool === "extend") {
     return [
-      { key: "subjectLock", icon: "1:1", title: "Square", body: "Center preserved" },
-      { key: "scratch", icon: "4:5", title: "Portrait", body: "Gentle expansion" },
-      { key: "fade", icon: "16:9", title: "Wide", body: "Scene extension" },
-      { key: "blur", icon: "Safe", title: "Subject Lock", body: "No face distortion" },
+      { key: "subjectLock", icon: "extend", title: "Square", body: "Center preserved" },
+      { key: "scratch", icon: "photos", title: "Portrait", body: "Gentle expansion" },
+      { key: "fade", icon: "library", title: "Wide", body: "Scene extension" },
+      { key: "blur", icon: "lock", title: "Subject Lock", body: "No face distortion" },
     ];
   }
   if (tool === "recolor") {
     return [
-      { key: "naturalColor", icon: "Skin", title: "Natural", body: "Restrained tones" },
-      { key: "scratch", icon: "Sepia", title: "Sepia lift", body: "Warm archive color" },
-      { key: "fade", icon: "Film", title: "Film", body: "Soft color grade" },
-      { key: "blur", icon: "BW", title: "B&W guard", body: "Preserve contrast" },
+      { key: "naturalColor", icon: "recolor", title: "Natural", body: "Restrained tones" },
+      { key: "scratch", icon: "restore", title: "Sepia lift", body: "Warm archive color" },
+      { key: "fade", icon: "samples", title: "Film", body: "Soft color grade" },
+      { key: "blur", icon: "shield", title: "B&W guard", body: "Preserve contrast" },
     ];
   }
   return [
-    { key: "scratch", icon: "Band", title: "Scratch Repair", body: "Remove cracks and scratches" },
-    { key: "fade", icon: "Sun", title: "Fade Recovery", body: "Restore colors and contrast" },
-    { key: "blur", icon: "Dot", title: "Blur Cleanup", body: "Sharpen faces and edges" },
-    { key: "detail", icon: "Fine", title: "Detail Recovery", body: "Enhance fine details" },
+    { key: "scratch", icon: "restore", title: "Scratch Repair", body: "Remove cracks and scratches" },
+    { key: "fade", icon: "recolor", title: "Fade Recovery", body: "Restore colors and contrast" },
+    { key: "blur", icon: "upscale", title: "Blur Cleanup", body: "Sharpen faces and edges" },
+    { key: "detail", icon: "samples", title: "Detail Recovery", body: "Enhance fine details" },
   ];
 }
 
@@ -1288,26 +1426,55 @@ const styles = {
   },
   toolCard: {
     width: "48%" as const,
-    minHeight: 165,
-    padding: 18,
-    gap: 12,
+    minHeight: 168,
+    padding: 16,
+    gap: 11,
     borderRadius: radii.md,
     borderWidth: 1,
     borderColor: colors.stroke,
-    backgroundColor: colors.panel,
+    backgroundColor: "rgba(255,255,255,0.06)",
   },
   importChoice: {
     width: "48%" as const,
-    minHeight: 118,
-    padding: 18,
-    justifyContent: "center" as const,
-    gap: 10,
+    minHeight: 130,
+    padding: 16,
+    justifyContent: "space-between" as const,
+    gap: 8,
     borderRadius: radii.md,
     borderWidth: 1,
     borderColor: colors.stroke,
     backgroundColor: colors.panel,
   },
-  cardTitle: { color: colors.text, fontSize: 18 },
+  iconGlyph: {
+    position: "relative" as const,
+    overflow: "visible" as const,
+  },
+  iconFrame: {
+    position: "absolute" as const,
+    borderRadius: 6,
+  },
+  iconCircle: {
+    position: "absolute" as const,
+    borderRadius: 99,
+  },
+  iconWell: {
+    width: 52,
+    height: 52,
+    borderRadius: 15,
+    borderWidth: 1,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+  },
+  controlIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+    backgroundColor: "rgba(255,255,255,0.04)",
+  },
+  cardTitle: { color: colors.text, fontSize: 18, fontWeight: "700" as const },
   cardBody: { color: colors.muted, fontSize: 14, lineHeight: 20 },
   panel: {
     padding: 18,
@@ -1329,14 +1496,23 @@ const styles = {
     backgroundColor: colors.panel,
   },
   iconButton: {
-    width: 62,
+    width: 56,
     height: 52,
     alignItems: "center" as const,
     justifyContent: "center" as const,
-    borderRadius: 99,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: colors.softStroke,
     backgroundColor: "rgba(255,255,255,0.05)",
+  },
+  iconSpacer: {
+    width: 56,
+    height: 52,
+  },
+  iconButtonText: {
+    color: colors.amber,
+    fontSize: 13,
+    fontWeight: "800" as const,
   },
   primary: {
     minHeight: 62,
@@ -1394,7 +1570,7 @@ const styles = {
   },
   controlCard: {
     width: "48%" as const,
-    minHeight: 158,
+    minHeight: 166,
     padding: 16,
     alignItems: "center" as const,
     gap: 9,
@@ -1407,7 +1583,14 @@ const styles = {
     width: 54,
     height: 28,
     borderRadius: 99,
+    padding: 3,
     backgroundColor: colors.dim,
+  },
+  toggleKnob: {
+    width: 22,
+    height: 22,
+    borderRadius: 99,
+    backgroundColor: colors.text,
   },
   segmentRow: {
     flexDirection: "row" as const,
@@ -1465,5 +1648,25 @@ const styles = {
     borderTopWidth: 1,
     borderTopColor: colors.softStroke,
     backgroundColor: "rgba(7,11,12,0.96)",
+  },
+  tabItem: {
+    flex: 1,
+    minHeight: 58,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+    gap: 5,
+    borderRadius: 18,
+  },
+  tabItemActive: {
+    backgroundColor: "rgba(239,177,106,0.10)",
+  },
+  textAction: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  pressed: {
+    opacity: 0.78,
+    transform: [{ scale: 0.98 }],
   },
 };
