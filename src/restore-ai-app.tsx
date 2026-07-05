@@ -356,16 +356,11 @@ function RestoreAIRoot() {
         goHome={() => navigate("home")}
       />
     ),
-    home: <PixelHomeScreen selectTool={selectTool} navigate={navigate} />,
-    import: <PixelImportScreen pickImage={pickImage} importSample={importSample} navigate={navigate} />,
-    workflow:
-      selectedTool === "restore" ? (
-        <PixelRestoreScreen startProcessing={startProcessing} navigate={navigate} />
-      ) : (
-        <WorkflowScreen tool={selectedTool} project={selectedProject} stage={currentStage} startProcessing={startProcessing} setActiveStage={setActiveStage} navigate={navigate} />
-      ),
+    home: <HomeScreen account={account} project={selectedProject} selectTool={selectTool} navigate={navigate} setActiveStage={setActiveStage} />,
+    import: <ImportScreen busy={busy} pickImage={pickImage} importSample={importSample} navigate={navigate} />,
+    workflow: <WorkflowScreen tool={selectedTool} project={selectedProject} stage={currentStage} startProcessing={startProcessing} setActiveStage={setActiveStage} navigate={navigate} />,
     processing: <ProcessingScreen progress={progress} tool={selectedTool} project={selectedProject} navigate={navigate} />,
-    comparison: <PixelComparisonScreen exportCurrent={exportCurrent} selectTool={selectTool} navigate={navigate} />,
+    comparison: <ComparisonScreen project={selectedProject} stage={currentStage} setActiveStage={setActiveStage} exportCurrent={exportCurrent} selectTool={selectTool} navigate={navigate} />,
     export: <ExportScreen account={account} project={selectedProject} stage={currentStage} prefs={prefs} selectExportFormat={selectExportFormat} message={message} busy={busy} exportCurrent={exportCurrent} navigate={navigate} />,
     library: <LibraryScreen projects={projects} setProjects={setProjects} setSelectedProjectId={setSelectedProjectId} navigate={navigate} />,
     detail: <DetailScreen project={selectedProject} setActiveStage={setActiveStage} selectTool={selectTool} exportCurrent={exportCurrent} navigate={navigate} />,
@@ -382,7 +377,7 @@ function RestoreAIRoot() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <StatusBar style="light" />
       {content}
-      {["library", "settings"].includes(screen) ? <BottomTabs active={screen} navigate={navigate} bottom={insets.bottom} /> : null}
+      {["home", "import", "library", "settings"].includes(screen) ? <BottomTabs active={screen} navigate={navigate} bottom={insets.bottom} /> : null}
     </View>
   );
 }
